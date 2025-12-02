@@ -93,14 +93,29 @@ NOTE: You are only given wise_item_number and win_item_name (product description
 - varying_attributes should only include: cfm, voltage, wattage, size, type, material, etc.
 
 ## OUTPUT FORMAT
-Return ONLY a JSON array:
+Return ONLY a JSON array. Each item has key "r" with value in this exact format:
+WISE_ITEM_NUMBER|SCORE|ATTRS
+
+Where:
+- WISE_ITEM_NUMBER: The product's wise_item_number
+- SCORE: Integer 50-100 based on scoring guidelines above (MUST be a real score, NOT 0)
+- ATTRS: Comma-separated varying attributes (or empty if none)
+
+Use PIPE character | as delimiter (NOT dots).
+
+Examples:
 [
-  {"wise_item_number": "ITEM1", "match_score": 100, "varying_attributes": []},
-  {"wise_item_number": "ITEM2", "match_score": 92, "varying_attributes": ["cfm"]},
-  {"wise_item_number": "ITEM3", "match_score": 85, "varying_attributes": ["cfm", "voltage"]}
+  {"r": "ACM09008|100|"},
+  {"r": "SUPDB8|92|cfm"},
+  {"r": "FCC46120002|85|cfm,voltage"},
+  {"r": "AERAF08|78|cfm,type,voltage"}
 ]
 
-IMPORTANT: Return ONLY valid JSON array, no additional text. Include ALL viable alternatives."""
+CRITICAL RULES:
+1. SCORE must be 50-100 based on actual evaluation, NEVER 0
+2. Use | as delimiter
+3. ATTRS can be empty but delimiter must be present
+4. Return ONLY valid JSON array, no other text"""
 
 
 def get_products_by_wise_item_numbers(
@@ -146,6 +161,134 @@ def get_products_by_wise_item_numbers(
     finally:
         if conn:
             conn.close()
+
+
+def get_cached_llm_matches(wise_item_number: str) -> List[Dict[str, Any]] | None:
+    """
+    Check cross_reference table for cached LLM matches.
+
+    Args:
+        wise_item_number: The source product's WISE item number
+
+    Returns:
+        List of cached matches in compact format, or None if not found
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute(
+            """
+            SELECT llm_matches
+            FROM public.cross_reference
+            WHERE wise_item_number = %s
+            """,
+            (wise_item_number,),
+        )
+
+        result = cursor.fetchone()
+        if result and result.get("llm_matches"):
+            logger.info(f"✅ Cache HIT for {wise_item_number}")
+            return result["llm_matches"]
+
+        logger.info(f"❌ Cache MISS for {wise_item_number}")
+        return None
+
+    except Exception as e:
+        logger.error(f"Error checking cross_reference cache: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+
+def save_llm_matches_to_cache(
+    wise_item_number: str, llm_matches: List[Dict[str, Any]]
+) -> bool:
+    """
+    Save LLM matches to cross_reference table for future lookups.
+
+    Args:
+        wise_item_number: The source product's WISE item number
+        llm_matches: List of matched products in compact format
+
+    Returns:
+        bool: True if saved successfully
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor()
+
+        # Use UPSERT (INSERT ON CONFLICT UPDATE) to handle duplicates
+        cursor.execute(
+            """
+            INSERT INTO public.cross_reference (wise_item_number, llm_matches)
+            VALUES (%s, %s)
+            ON CONFLICT (wise_item_number)
+            DO UPDATE SET llm_matches = EXCLUDED.llm_matches
+            """,
+            (wise_item_number, json.dumps(llm_matches)),
+        )
+
+        conn.commit()
+        logger.info(
+            f"✅ Saved {len(llm_matches)} matches to cache for {wise_item_number}"
+        )
+        return True
+
+    except Exception as e:
+        logger.error(f"Error saving to cross_reference cache: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+def parse_compact_llm_format(
+    compact_matches: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """
+    Parse compact LLM format and convert to standard format.
+
+    Args:
+        compact_matches: List of {"r": "item|score|attrs"} format (pipe delimiter)
+
+    Returns:
+        List of {"wise_item_number": ..., "match_score": ..., "varying_attributes": [...]}
+    """
+    results = []
+    for item in compact_matches:
+        compact_str = item.get("r", "")
+        if not compact_str:
+            continue
+
+        parts = compact_str.split("|")
+        if len(parts) >= 2:
+            wise_item_number = parts[0].strip()
+            try:
+                match_score = int(parts[1].strip())
+            except ValueError:
+                match_score = 50  # Default to minimum passing score
+
+            varying_attrs = []
+            if len(parts) >= 3 and parts[2]:
+                varying_attrs = [
+                    attr.strip() for attr in parts[2].split(",") if attr.strip()
+                ]
+
+            results.append(
+                {
+                    "wise_item_number": wise_item_number,
+                    "match_score": match_score,
+                    "varying_attributes": varying_attrs,
+                }
+            )
+
+    return results
 
 
 def get_azure_client() -> AzureOpenAI:
@@ -223,7 +366,39 @@ def process_batch(
                 response_text = response_text[4:]
             response_text = response_text.strip()
 
-        results = json.loads(response_text)
+        raw_results = json.loads(response_text)
+
+        # Parse compact string format and convert to original dictionary format
+        # Format: WISE_ITEM_NUMBER|SCORE|ATTRS (using pipe delimiter)
+        results = []
+        for item in raw_results:
+            compact_str = item.get("r", "")
+            if not compact_str:
+                continue
+
+            parts = compact_str.split("|")
+            if len(parts) >= 2:
+                wise_item_number = parts[0].strip()
+                try:
+                    match_score = int(parts[1].strip())
+                except ValueError:
+                    match_score = 50  # Default to minimum passing score
+
+                # Parse varying attributes (may be empty)
+                varying_attrs = []
+                if len(parts) >= 3 and parts[2]:
+                    varying_attrs = [
+                        attr.strip() for attr in parts[2].split(",") if attr.strip()
+                    ]
+
+                results.append(
+                    {
+                        "wise_item_number": wise_item_number,
+                        "match_score": match_score,
+                        "varying_attributes": varying_attrs,
+                    }
+                )
+
         logger.info(f"Batch {batch_num} returned {len(results)} matched products")
         return results
 
@@ -286,7 +461,7 @@ def llm_match_products(
     top_k: int = None,
 ) -> Dict[str, Any]:
     """
-    Main function to match products using LLM.
+    Main function to match products using LLM with cross-reference caching.
 
     Args:
         query_text: The search query text
@@ -300,11 +475,55 @@ def llm_match_products(
     if top_k is None:
         top_k = LLM_MAX_RESULTS
 
+    source_wise_item = source_product.get("wise_item_number")
+
     logger.info("=" * 80)
     logger.info("LLM PRODUCT MATCHING")
     logger.info("=" * 80)
-    logger.info(f"Source product: {source_product.get('wise_item_number')}")
+    logger.info(f"Source product: {source_wise_item}")
     logger.info(f"Query text: {query_text[:100]}...")
+
+    # Step 1: Check cross-reference cache first
+    logger.info("Checking cross-reference cache...")
+    cached_matches = get_cached_llm_matches(source_wise_item)
+
+    if cached_matches is not None:
+        # Cache HIT - Parse cached results and return
+        logger.info(f"🚀 Using cached results for {source_wise_item}")
+
+        # Parse compact format to standard format
+        parsed_results = parse_compact_llm_format(cached_matches)
+
+        # Sort by match_score descending and take top_k
+        parsed_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+        top_results = parsed_results[:top_k]
+
+        # Get wise_item_numbers for database lookup
+        wise_item_numbers = [
+            r.get("wise_item_number") for r in top_results if r.get("wise_item_number")
+        ]
+
+        # Fetch full product details from database
+        logger.info(f"Fetching {len(wise_item_numbers)} products from database...")
+        products_from_db = get_products_by_wise_item_numbers(wise_item_numbers)
+
+        # Enrich with database data
+        enriched_results = _enrich_results_with_db(top_results, products_from_db)
+
+        logger.info(f"✅ Returning {len(enriched_results)} cached products")
+        return {
+            "matched_products": enriched_results,
+            "total_matched": len(enriched_results),
+            "from_cache": True,
+            "processing_stats": {
+                "total_candidates": 0,
+                "batches_processed": 0,
+                "cache_hit": True,
+            },
+        }
+
+    # Cache MISS - Run full LLM pipeline
+    logger.info(f"Running full LLM pipeline for {source_wise_item}...")
     logger.info(f"Total candidates: {len(candidates)}")
 
     if not candidates:
@@ -327,6 +546,16 @@ def llm_match_products(
         # Sort by match_score descending
         matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
 
+        # Save ALL results to cache (in compact format) before taking top_k
+        # This allows future queries with different top_k to use the cache
+        compact_matches = [
+            {
+                "r": f"{r.get('wise_item_number')}|{r.get('match_score', 0)}|{','.join(r.get('varying_attributes', []))}"
+            }
+            for r in matched_results
+        ]
+        save_llm_matches_to_cache(source_wise_item, compact_matches)
+
         # Take top_k results
         top_results = matched_results[:top_k]
 
@@ -340,26 +569,7 @@ def llm_match_products(
         products_from_db = get_products_by_wise_item_numbers(wise_item_numbers)
 
         # Enrich results with full database data
-        enriched_results = []
-        for result in top_results:
-            wise_num = result.get("wise_item_number")
-            if wise_num in products_from_db:
-                # Get full product data from database
-                db_product = products_from_db[wise_num]
-                enriched = {
-                    "id": db_product.get("id"),
-                    "wise_item_number": db_product.get("wise_item_number"),
-                    "win_item_name": db_product.get("win_item_name"),
-                    "brand_name": db_product.get("brand_name"),
-                    "catalog_number": db_product.get("catalog_number"),
-                    "mainframe_description": db_product.get("mainframe_description"),
-                    "preferred_supplier": db_product.get("preferred_supplier"),
-                    "match_score": result.get("match_score", 0),
-                    "varying_attributes": result.get("varying_attributes", []),
-                }
-                enriched_results.append(enriched)
-            else:
-                logger.warning(f"Product {wise_num} not found in database")
+        enriched_results = _enrich_results_with_db(top_results, products_from_db)
 
         logger.info(
             f"LLM matching complete. Returning {len(enriched_results)} products"
@@ -372,11 +582,13 @@ def llm_match_products(
         return {
             "matched_products": enriched_results,
             "total_matched": len(enriched_results),
+            "from_cache": False,
             "processing_stats": {
                 "total_candidates": len(candidates),
                 "batches_processed": (len(candidates) + LLM_BATCH_SIZE - 1)
                 // LLM_BATCH_SIZE,
                 "results_before_top_k": len(matched_results),
+                "cache_hit": False,
             },
         }
 
@@ -391,3 +603,29 @@ def llm_match_products(
                 "batches_processed": 0,
             },
         }
+
+
+def _enrich_results_with_db(
+    results: List[Dict[str, Any]], products_from_db: Dict[str, Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Helper function to enrich LLM results with database product details."""
+    enriched_results = []
+    for result in results:
+        wise_num = result.get("wise_item_number")
+        if wise_num in products_from_db:
+            db_product = products_from_db[wise_num]
+            enriched = {
+                "id": db_product.get("id"),
+                "wise_item_number": db_product.get("wise_item_number"),
+                "win_item_name": db_product.get("win_item_name"),
+                "brand_name": db_product.get("brand_name"),
+                "catalog_number": db_product.get("catalog_number"),
+                "mainframe_description": db_product.get("mainframe_description"),
+                "preferred_supplier": db_product.get("preferred_supplier"),
+                "match_score": result.get("match_score", 0),
+                "varying_attributes": result.get("varying_attributes", []),
+            }
+            enriched_results.append(enriched)
+        else:
+            logger.warning(f"Product {wise_num} not found in database")
+    return enriched_results
