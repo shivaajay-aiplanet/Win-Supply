@@ -1,0 +1,19 @@
+fastapi==0.115.5
+uvicorn==0.32.1
+psycopg2-binary==2.9.9
+opensearch-py==2.4.2
+python-dotenv==1.0.0
+
+# Phase 2: Vector Embeddings
+ollama==0.4.4
+requests==2.32.3
+numpy==1.26.4
+tqdm==4.66.1
+
+# Phase 3: Reranker - Pin compatible versions
+huggingface-hub==0.26.5
+sentence-transformers==3.3.1
+transformers==4.45.0
+torch==2.5.1
+
+
