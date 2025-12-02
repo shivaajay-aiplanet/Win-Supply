@@ -50,3 +50,11 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "nomic-embed-text:v1.5")
 EMBEDDING_DIMENSION = int(os.getenv("EMBEDDING_DIMENSION", "768"))
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "100"))
 PROGRESS_DB_PATH = os.getenv("PROGRESS_DB_PATH", "./embedding_progress.db")
+
+# Phase 3: Azure OpenAI LLM Configuration
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT", "o4-mini")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
+LLM_BATCH_SIZE = int(os.getenv("LLM_BATCH_SIZE", "50"))
+LLM_MAX_RESULTS = int(os.getenv("LLM_MAX_RESULTS", "20"))

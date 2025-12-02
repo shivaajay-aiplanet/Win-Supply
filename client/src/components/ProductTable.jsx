@@ -63,8 +63,17 @@ function ProductTable({
               <tbody>
                 {(isSearchMode ? searchResults?.results || [] : products).map(
                   (item) => {
-                    const product = isSearchMode ? item.document : item;
-                    const productId = isSearchMode ? item.id : product.id;
+                    // Handle both hybrid search (direct product) and regular search (item.document)
+                    const product = isSearchMode
+                      ? isHybridSearch
+                        ? item
+                        : item.document
+                      : item;
+                    const productId = isSearchMode
+                      ? isHybridSearch
+                        ? item.id
+                        : item.id
+                      : product.id;
                     const isExactMatch =
                       isSearchMode && productId === exactMatchId;
 
@@ -84,29 +93,24 @@ function ProductTable({
                                 <>
                                   <div className="flex items-center gap-2">
                                     <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold">
-                                      {(item.relevance_score * 100).toFixed(1)}%
-                                    </span>
-                                    <span className="text-gray-500 text-xs">
-                                      #{item.rank}
+                                      {item.match_score || 0}%
                                     </span>
                                   </div>
-                                  <div className="flex gap-1 text-xs">
-                                    <span
-                                      className="text-gray-500"
-                                      title="BM25 Score"
-                                    >
-                                      K:{" "}
-                                      {item.keyword_score?.toFixed(1) || "0.0"}
-                                    </span>
-                                    <span className="text-gray-400">|</span>
-                                    <span
-                                      className="text-gray-500"
-                                      title="Vector Score"
-                                    >
-                                      V:{" "}
-                                      {item.vector_score?.toFixed(1) || "0.0"}
-                                    </span>
-                                  </div>
+                                  {item.varying_attributes &&
+                                    item.varying_attributes.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 text-xs">
+                                        {item.varying_attributes.map(
+                                          (attr, idx) => (
+                                            <span
+                                              key={idx}
+                                              className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded"
+                                            >
+                                              {attr}
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
                                 </>
                               ) : (
                                 <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">

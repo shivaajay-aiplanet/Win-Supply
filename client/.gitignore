@@ -8,10 +8,49 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Dependencies
-node_modules
-dist
-dist-ssr
-*.local
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+embedding_etl.log
+
+# Database
+*.db
+*.sqlite
+embedding_progress.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.temp
 
 # Editor directories and files
 .vscode/*
@@ -43,4 +82,5 @@ coverage
 .vercel
 .output
 .nuxt
+
 
