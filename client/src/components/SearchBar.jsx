@@ -3,15 +3,9 @@ function SearchBar({
   setSearchQuery,
   searchType,
   setSearchType,
-  topK,
-  setTopK,
   handleSearch,
   handleReset,
   searchLoading,
-  isSearchMode,
-  searchResults,
-  isHybridSearch,
-  exactMatchId,
 }) {
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -21,7 +15,7 @@ function SearchBar({
 
   return (
     <div className="bg-gradient-to-r from-white to-blue-50 p-5 rounded-xl shadow-md border border-gray-200">
-      <div className="flex gap-3 mb-3">
+      <div className="flex gap-3 flex-wrap">
         <div className="flex-1 relative">
           <input
             type="text"
@@ -55,18 +49,8 @@ function SearchBar({
           onChange={(e) => setSearchType(e.target.value)}
           title="Search Type"
         >
-          <option value="all_fields">All Fields</option>
           <option value="wise_item_number">WISE Item Number</option>
-        </select>
-        <select
-          className="px-4 py-3 border-2 border-gray-300 rounded-lg text-sm min-w-[150px] bg-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm font-medium"
-          value={topK}
-          onChange={(e) => setTopK(Number(e.target.value))}
-        >
-          <option value={10}>Top 10 Results</option>
-          <option value={20}>Top 20 Results</option>
-          <option value={50}>Top 50 Results</option>
-          <option value={100}>Top 100 Results</option>
+          <option value="all_fields">All Fields</option>
         </select>
         <button
           className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"

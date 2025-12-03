@@ -24,9 +24,9 @@ function Inventory() {
   const [searchResults, setSearchResults] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [topK, setTopK] = useState(20);
+  const topK = 20; // Fixed value for search results limit
   const [exactMatchId, setExactMatchId] = useState(null);
-  const [searchType, setSearchType] = useState("all_fields"); // "all_fields" or "wise_item_number"
+  const [searchType, setSearchType] = useState("wise_item_number"); // "all_fields" or "wise_item_number"
   const [isHybridSearch, setIsHybridSearch] = useState(false); // Track if using hybrid search
   const [showScores, setShowScores] = useState(false); // Toggle for showing/hiding search scores
 
@@ -161,7 +161,7 @@ function Inventory() {
     setIsHybridSearch(false);
     setExactMatchId(null);
     setError(null);
-    setSearchType("all_fields");
+    setSearchType("wise_item_number");
     fetchProducts(1);
   };
 
@@ -306,7 +306,7 @@ function Inventory() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 flex flex-col overflow-hidden ">
+    <div className="h-full w-full bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 flex flex-col overflow-hidden">
       {/* Header */}
       <Header showScores={showScores} toggleScores={toggleScores} />
 
@@ -344,15 +344,9 @@ function Inventory() {
             setSearchQuery={setSearchQuery}
             searchType={searchType}
             setSearchType={setSearchType}
-            topK={topK}
-            setTopK={setTopK}
             handleSearch={handleSearch}
             handleReset={handleReset}
             searchLoading={searchLoading}
-            isSearchMode={isSearchMode}
-            searchResults={searchResults}
-            isHybridSearch={isHybridSearch}
-            exactMatchId={exactMatchId}
           />
         </div>
 
