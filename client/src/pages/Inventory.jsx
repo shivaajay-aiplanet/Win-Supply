@@ -34,6 +34,9 @@ function Inventory() {
   const [sortBy, setSortBy] = useState("relevance");
   const [brandFilter, setBrandFilter] = useState("");
 
+  // Alternatives state
+  const [alternativesMap, setAlternativesMap] = useState({});
+
   // Fetch products from API
   const fetchProducts = async (page = 1) => {
     setLoading(true);
@@ -56,6 +59,24 @@ function Inventory() {
       console.error("Error fetching products:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch alternatives from cross-reference table
+  const fetchAlternatives = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/search/cross-reference/alternatives`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.alternatives) {
+          setAlternativesMap(data.alternatives);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching alternatives:", err);
     }
   };
 
@@ -287,9 +308,109 @@ function Inventory() {
     return processedProducts;
   };
 
-  // Fetch products on component mount
+  // Handle deleting a match from cross-reference
+  const handleDeleteMatch = async (
+    sourceWiseItemNumber,
+    matchedWiseItemNumber
+  ) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/search/cross-reference/delete-match?source_wise_item_number=${encodeURIComponent(
+          sourceWiseItemNumber
+        )}&matched_wise_item_number=${encodeURIComponent(
+          matchedWiseItemNumber
+        )}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove the deleted match from search results
+      if (searchResults && searchResults.results) {
+        const updatedResults = searchResults.results.filter(
+          (item) => item.wise_item_number !== matchedWiseItemNumber
+        );
+        setSearchResults({
+          ...searchResults,
+          results: updatedResults,
+          returned_count: updatedResults.length,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting match:", error);
+      throw error;
+    }
+  };
+
+  // Handle like/dislike feedback for a match
+  const handleFeedback = async (
+    sourceWiseItemNumber,
+    matchedWiseItemNumber,
+    feedbackType
+  ) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/search/cross-reference/feedback?source_wise_item_number=${encodeURIComponent(
+          sourceWiseItemNumber
+        )}&matched_wise_item_number=${encodeURIComponent(
+          matchedWiseItemNumber
+        )}&feedback_type=${encodeURIComponent(feedbackType)}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // If the match was removed due to too many dislikes, remove from results
+      if (data.removed) {
+        if (searchResults && searchResults.results) {
+          const updatedResults = searchResults.results.filter(
+            (item) => item.wise_item_number !== matchedWiseItemNumber
+          );
+          setSearchResults({
+            ...searchResults,
+            results: updatedResults,
+            returned_count: updatedResults.length,
+          });
+        }
+      } else {
+        // Update the like/dislike counts in the search results
+        if (searchResults && searchResults.results) {
+          const updatedResults = searchResults.results.map((item) => {
+            if (item.wise_item_number === matchedWiseItemNumber) {
+              return {
+                ...item,
+                likes: data.likes,
+                dislikes: data.dislikes,
+              };
+            }
+            return item;
+          });
+          setSearchResults({
+            ...searchResults,
+            results: updatedResults,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      throw error;
+    }
+  };
+
+  // Fetch products and alternatives on component mount
   useEffect(() => {
     fetchProducts(1);
+    fetchAlternatives();
   }, []);
 
   // Handle page navigation
@@ -374,6 +495,15 @@ function Inventory() {
             handlePreviousPage={handlePreviousPage}
             handleNextPage={handleNextPage}
             showScores={showScores}
+            sourceWiseItemNumber={searchResults?.wise_item_number}
+            onDeleteMatch={handleDeleteMatch}
+            onFeedback={handleFeedback}
+            alternativesMap={alternativesMap}
+            onAlternativeClick={(wiseItemNumber) => {
+              setSearchQuery(wiseItemNumber);
+              setSearchType("wise_item_number");
+              searchProducts(wiseItemNumber);
+            }}
           />
         </div>
       </div>

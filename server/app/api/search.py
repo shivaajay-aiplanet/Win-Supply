@@ -11,6 +11,12 @@ from app.services.search_service import (
     get_document_by_id,
     hybrid_search_by_wise_item,
 )
+from app.services.llm_matching_service import (
+    delete_match_from_cross_reference,
+    get_all_top_alternatives,
+    update_match_feedback,
+    get_match_feedback,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -165,3 +171,158 @@ async def search_by_wise_item(
     except Exception as e:
         logger.error(f"Hybrid search error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Hybrid search failed: {str(e)}")
+
+
+@router.post("/search/cross-reference/delete-match")
+async def delete_cross_reference_match(
+    source_wise_item_number: str = Query(
+        ..., description="Source product WISE item number (the search query product)"
+    ),
+    matched_wise_item_number: str = Query(
+        ..., description="WISE item number of the similar product to remove"
+    ),
+):
+    """
+    Delete a specific matched product from the cross-reference cache.
+
+    This endpoint removes a single match from the llm_matches JSONB array for a given
+    source product. Used when a user reports an incorrect product match.
+
+    - **source_wise_item_number**: The WISE item number of the source product (search query)
+    - **matched_wise_item_number**: The WISE item number of the match to delete
+
+    Returns:
+    - **success**: Whether the deletion was successful
+    - **message**: Description of the result
+    - **remaining_matches**: Number of remaining matches after deletion
+    """
+    try:
+        logger.info(
+            f"Delete cross-reference match request: source={source_wise_item_number}, "
+            f"match_to_delete={matched_wise_item_number}"
+        )
+
+        result = delete_match_from_cross_reference(
+            source_wise_item_number=source_wise_item_number,
+            matched_wise_item_number=matched_wise_item_number,
+        )
+
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=result.get("message"))
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete cross-reference match error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
+
+@router.get("/search/cross-reference/alternatives")
+async def get_cross_reference_alternatives():
+    """
+    Get all top alternatives from the cross-reference table.
+
+    Returns a mapping of source wise_item_number to the best alternative's wise_item_number.
+    """
+    try:
+        alternatives_map = get_all_top_alternatives()
+        return {
+            "success": True,
+            "alternatives": alternatives_map,
+            "count": len(alternatives_map),
+        }
+    except Exception as e:
+        logger.error(f"Get alternatives error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch alternatives: {str(e)}"
+        )
+
+
+@router.post("/search/cross-reference/feedback")
+async def update_cross_reference_feedback(
+    source_wise_item_number: str = Query(
+        ..., description="Source product WISE item number (the search query product)"
+    ),
+    matched_wise_item_number: str = Query(
+        ..., description="WISE item number of the similar product"
+    ),
+    feedback_type: str = Query(
+        ..., description="Type of feedback: 'like' or 'dislike'"
+    ),
+):
+    """
+    Update like or dislike count for a specific matched product.
+
+    If the dislike count exceeds 5, the match will be automatically removed.
+
+    - **source_wise_item_number**: The WISE item number of the source product (search query)
+    - **matched_wise_item_number**: The WISE item number of the match to update
+    - **feedback_type**: Either 'like' or 'dislike'
+
+    Returns:
+    - **success**: Whether the update was successful
+    - **message**: Description of the result
+    - **likes**: Current like count
+    - **dislikes**: Current dislike count
+    - **removed**: Whether the match was removed due to excessive dislikes
+    """
+    try:
+        if feedback_type not in ["like", "dislike"]:
+            raise HTTPException(
+                status_code=400, detail="feedback_type must be 'like' or 'dislike'"
+            )
+
+        logger.info(
+            f"Update feedback request: source={source_wise_item_number}, "
+            f"match={matched_wise_item_number}, type={feedback_type}"
+        )
+
+        result = update_match_feedback(
+            source_wise_item_number=source_wise_item_number,
+            matched_wise_item_number=matched_wise_item_number,
+            feedback_type=feedback_type,
+        )
+
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=result.get("message"))
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update feedback error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
+
+
+@router.get("/search/cross-reference/feedback")
+async def get_cross_reference_feedback(
+    source_wise_item_number: str = Query(
+        ..., description="Source product WISE item number"
+    ),
+    matched_wise_item_number: str = Query(
+        ..., description="WISE item number of the similar product"
+    ),
+):
+    """
+    Get the current like and dislike counts for a specific match.
+
+    - **source_wise_item_number**: The WISE item number of the source product
+    - **matched_wise_item_number**: The WISE item number of the match
+
+    Returns:
+    - **success**: Whether the lookup was successful
+    - **likes**: Current like count
+    - **dislikes**: Current dislike count
+    """
+    try:
+        result = get_match_feedback(
+            source_wise_item_number=source_wise_item_number,
+            matched_wise_item_number=matched_wise_item_number,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Get feedback error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Get feedback failed: {str(e)}")

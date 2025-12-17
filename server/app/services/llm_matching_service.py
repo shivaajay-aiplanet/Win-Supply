@@ -203,6 +203,90 @@ def get_cached_llm_matches(wise_item_number: str) -> List[Dict[str, Any]] | None
             conn.close()
 
 
+def get_all_top_alternatives() -> Dict[str, Dict[str, Any]]:
+    """
+    Fetch all cross-reference entries and return a mapping of
+    source_wise_item_number -> top alternative details (wise_item_number, match_score, varying_attributes).
+
+    Returns:
+        dict: Mapping of source wise_item_number to the best alternative's full data
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute(
+            """
+            SELECT wise_item_number, llm_matches
+            FROM public.cross_reference
+            """
+        )
+
+        results = cursor.fetchall()
+        alternatives_map = {}
+
+        for row in results:
+            source_wise_item = row.get("wise_item_number")
+            llm_matches = row.get("llm_matches", [])
+
+            if not llm_matches or not source_wise_item:
+                continue
+
+            # Parse compact format and collect all matches with scores and attrs
+            # Format: {"r": "WISE_ITEM_NUMBER|SCORE|ATTRS"}
+            matches_with_data = []
+
+            for match in llm_matches:
+                compact_str = match.get("r", "")
+                if not compact_str:
+                    continue
+
+                parts = compact_str.split("|")
+                if len(parts) >= 2:
+                    match_wise_item = parts[0].strip()
+                    try:
+                        score = int(parts[1].strip())
+                    except ValueError:
+                        score = 0
+
+                    # Parse varying attributes
+                    varying_attrs = []
+                    if len(parts) >= 3 and parts[2]:
+                        varying_attrs = [
+                            attr.strip() for attr in parts[2].split(",") if attr.strip()
+                        ]
+
+                    matches_with_data.append(
+                        {
+                            "wise_item_number": match_wise_item,
+                            "match_score": score,
+                            "varying_attributes": varying_attrs,
+                        }
+                    )
+
+            # Sort by score descending
+            matches_with_data.sort(key=lambda x: x["match_score"], reverse=True)
+
+            # Find the best alternative that is NOT the same as the source
+            for match_data in matches_with_data:
+                if match_data["wise_item_number"] != source_wise_item:
+                    alternatives_map[source_wise_item] = match_data
+                    break
+
+        logger.info(
+            f"Fetched {len(alternatives_map)} top alternatives from cross_reference"
+        )
+        return alternatives_map
+
+    except Exception as e:
+        logger.error(f"Error fetching top alternatives: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+
 def save_llm_matches_to_cache(
     wise_item_number: str, llm_matches: List[Dict[str, Any]]
 ) -> bool:
@@ -248,6 +332,101 @@ def save_llm_matches_to_cache(
             conn.close()
 
 
+def delete_match_from_cross_reference(
+    source_wise_item_number: str, matched_wise_item_number: str
+) -> Dict[str, Any]:
+    """
+    Delete a specific matched product from the cross_reference table.
+
+    This removes a single match from the llm_matches JSONB array for a given
+    source product. Used when a user reports an incorrect product match.
+
+    Args:
+        source_wise_item_number: The source product's WISE item number (the search query)
+        matched_wise_item_number: The WISE item number of the match to delete
+
+    Returns:
+        dict: {"success": bool, "message": str, "remaining_matches": int}
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # First, get the current llm_matches
+        cursor.execute(
+            """
+            SELECT llm_matches
+            FROM public.cross_reference
+            WHERE wise_item_number = %s
+            """,
+            (source_wise_item_number,),
+        )
+
+        result = cursor.fetchone()
+        if not result or not result.get("llm_matches"):
+            return {
+                "success": False,
+                "message": f"No cross-reference found for {source_wise_item_number}",
+                "remaining_matches": 0,
+            }
+
+        current_matches = result["llm_matches"]
+        original_count = len(current_matches)
+
+        # Filter out the match to delete
+        # The format is {"r": "WISE_ITEM_NUMBER|SCORE|ATTRS"}
+        updated_matches = [
+            match
+            for match in current_matches
+            if not match.get("r", "").startswith(f"{matched_wise_item_number}|")
+        ]
+
+        new_count = len(updated_matches)
+
+        if new_count == original_count:
+            return {
+                "success": False,
+                "message": f"Match {matched_wise_item_number} not found in cross-reference for {source_wise_item_number}",
+                "remaining_matches": original_count,
+            }
+
+        # Update the cross_reference table with the filtered matches
+        cursor.execute(
+            """
+            UPDATE public.cross_reference
+            SET llm_matches = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE wise_item_number = %s
+            """,
+            (json.dumps(updated_matches), source_wise_item_number),
+        )
+
+        conn.commit()
+        logger.info(
+            f"✅ Deleted match {matched_wise_item_number} from cross-reference for {source_wise_item_number}. "
+            f"Remaining matches: {new_count}"
+        )
+
+        return {
+            "success": True,
+            "message": f"Successfully removed {matched_wise_item_number} from cross-reference",
+            "remaining_matches": new_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error deleting match from cross_reference: {e}")
+        if conn:
+            conn.rollback()
+        return {
+            "success": False,
+            "message": f"Database error: {str(e)}",
+            "remaining_matches": 0,
+        }
+    finally:
+        if conn:
+            conn.close()
+
+
 def parse_compact_llm_format(
     compact_matches: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
@@ -255,10 +434,10 @@ def parse_compact_llm_format(
     Parse compact LLM format and convert to standard format.
 
     Args:
-        compact_matches: List of {"r": "item|score|attrs"} format (pipe delimiter)
+        compact_matches: List of {"r": "item|score|attrs", "l": likes, "d": dislikes} format (pipe delimiter)
 
     Returns:
-        List of {"wise_item_number": ..., "match_score": ..., "varying_attributes": [...]}
+        List of {"wise_item_number": ..., "match_score": ..., "varying_attributes": [...], "likes": int, "dislikes": int}
     """
     results = []
     for item in compact_matches:
@@ -280,11 +459,17 @@ def parse_compact_llm_format(
                     attr.strip() for attr in parts[2].split(",") if attr.strip()
                 ]
 
+            # Get like/dislike counts (default to 0)
+            likes = item.get("l", 0)
+            dislikes = item.get("d", 0)
+
             results.append(
                 {
                     "wise_item_number": wise_item_number,
                     "match_score": match_score,
                     "varying_attributes": varying_attrs,
+                    "likes": likes,
+                    "dislikes": dislikes,
                 }
             )
 
@@ -624,8 +809,193 @@ def _enrich_results_with_db(
                 "preferred_supplier": db_product.get("preferred_supplier"),
                 "match_score": result.get("match_score", 0),
                 "varying_attributes": result.get("varying_attributes", []),
+                "likes": result.get("likes", 0),
+                "dislikes": result.get("dislikes", 0),
             }
             enriched_results.append(enriched)
         else:
             logger.warning(f"Product {wise_num} not found in database")
     return enriched_results
+
+
+def update_match_feedback(
+    source_wise_item_number: str,
+    matched_wise_item_number: str,
+    feedback_type: str,  # "like" or "dislike"
+) -> Dict[str, Any]:
+    """
+    Update the like or dislike count for a specific match in the cross_reference table.
+    If dislikes exceed 5, automatically removes the match.
+
+    Args:
+        source_wise_item_number: The source product's WISE item number
+        matched_wise_item_number: The WISE item number of the match to update
+        feedback_type: Either "like" or "dislike"
+
+    Returns:
+        dict: {"success": bool, "message": str, "likes": int, "dislikes": int, "removed": bool}
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get the current llm_matches
+        cursor.execute(
+            """
+            SELECT llm_matches
+            FROM public.cross_reference
+            WHERE wise_item_number = %s
+            """,
+            (source_wise_item_number,),
+        )
+
+        result = cursor.fetchone()
+        if not result or not result.get("llm_matches"):
+            return {
+                "success": False,
+                "message": f"No cross-reference found for {source_wise_item_number}",
+                "likes": 0,
+                "dislikes": 0,
+                "removed": False,
+            }
+
+        current_matches = result["llm_matches"]
+        updated_matches = []
+        match_found = False
+        likes = 0
+        dislikes = 0
+        removed = False
+
+        for match in current_matches:
+            compact_str = match.get("r", "")
+            if compact_str.startswith(f"{matched_wise_item_number}|"):
+                match_found = True
+                # Get current counts (default to 0)
+                likes = match.get("l", 0)
+                dislikes = match.get("d", 0)
+
+                # Update the count based on feedback type
+                if feedback_type == "like":
+                    likes += 1
+                elif feedback_type == "dislike":
+                    dislikes += 1
+
+                # Check if dislikes exceed threshold
+                if dislikes > 5:
+                    removed = True
+                    logger.info(
+                        f"Auto-removing match {matched_wise_item_number} from {source_wise_item_number} "
+                        f"due to {dislikes} dislikes"
+                    )
+                    # Don't add this match to updated_matches (effectively removing it)
+                    continue
+
+                # Update the match with new counts
+                updated_match = {"r": compact_str, "l": likes, "d": dislikes}
+                updated_matches.append(updated_match)
+            else:
+                updated_matches.append(match)
+
+        if not match_found:
+            return {
+                "success": False,
+                "message": f"Match {matched_wise_item_number} not found in cross-reference for {source_wise_item_number}",
+                "likes": 0,
+                "dislikes": 0,
+                "removed": False,
+            }
+
+        # Update the cross_reference table
+        cursor.execute(
+            """
+            UPDATE public.cross_reference
+            SET llm_matches = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE wise_item_number = %s
+            """,
+            (json.dumps(updated_matches), source_wise_item_number),
+        )
+
+        conn.commit()
+        logger.info(
+            f"Updated feedback for {matched_wise_item_number} in {source_wise_item_number}: "
+            f"likes={likes}, dislikes={dislikes}, removed={removed}"
+        )
+
+        return {
+            "success": True,
+            "message": (
+                "Removed due to excessive dislikes"
+                if removed
+                else f"Successfully updated {feedback_type}"
+            ),
+            "likes": likes,
+            "dislikes": dislikes,
+            "removed": removed,
+        }
+
+    except Exception as e:
+        logger.error(f"Error updating match feedback: {e}")
+        if conn:
+            conn.rollback()
+        return {
+            "success": False,
+            "message": f"Database error: {str(e)}",
+            "likes": 0,
+            "dislikes": 0,
+            "removed": False,
+        }
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_match_feedback(
+    source_wise_item_number: str,
+    matched_wise_item_number: str,
+) -> Dict[str, Any]:
+    """
+    Get the current like and dislike counts for a specific match.
+
+    Args:
+        source_wise_item_number: The source product's WISE item number
+        matched_wise_item_number: The WISE item number of the match
+
+    Returns:
+        dict: {"success": bool, "likes": int, "dislikes": int}
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(POSTGRES_CONNECTION_STRING)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute(
+            """
+            SELECT llm_matches
+            FROM public.cross_reference
+            WHERE wise_item_number = %s
+            """,
+            (source_wise_item_number,),
+        )
+
+        result = cursor.fetchone()
+        if not result or not result.get("llm_matches"):
+            return {"success": False, "likes": 0, "dislikes": 0}
+
+        for match in result["llm_matches"]:
+            compact_str = match.get("r", "")
+            if compact_str.startswith(f"{matched_wise_item_number}|"):
+                return {
+                    "success": True,
+                    "likes": match.get("l", 0),
+                    "dislikes": match.get("d", 0),
+                }
+
+        return {"success": False, "likes": 0, "dislikes": 0}
+
+    except Exception as e:
+        logger.error(f"Error getting match feedback: {e}")
+        return {"success": False, "likes": 0, "dislikes": 0}
+    finally:
+        if conn:
+            conn.close()
