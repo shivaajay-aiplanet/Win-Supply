@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import ProductDetailModal from "./ProductDetailModal";
 
 function ProductTable({
   loading,
@@ -24,6 +25,8 @@ function ProductTable({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState({});
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Close menu when clicking outside
@@ -80,8 +83,27 @@ function ProductTable({
     }
   };
 
+  // Handle row click to open modal
+  const handleRowClick = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  };
+
   return (
     <main className="flex-1 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden border border-gray-200">
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
+
       {(loading || searchLoading) && (
         <div className="text-center py-16 text-gray-600">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
@@ -204,11 +226,12 @@ function ProductTable({
                     return (
                       <tr
                         key={productId}
-                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 ${
+                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 cursor-pointer ${
                           isExactMatch
                             ? "bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-l-green-500 shadow-sm"
                             : ""
                         }`}
+                        onClick={() => handleRowClick(product)}
                         onMouseEnter={() => setHoveredRowId(productId)}
                         onMouseLeave={() => {
                           setHoveredRowId(null);
@@ -485,7 +508,7 @@ function ProductTable({
                                   <span>{item.dislikes || 0}</span>
                                 </button>
                                 {/* 3-dot menu */}
-                               {/* <button
+                                {/* <button
                                   onClick={(e) => handleMenuClick(productId, e)}
                                   className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
                                   title="More actions"
