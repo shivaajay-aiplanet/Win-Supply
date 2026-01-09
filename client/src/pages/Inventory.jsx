@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import RefineSearch from "../components/RefineSearch";
@@ -7,6 +8,7 @@ import ProductTable from "../components/ProductTable";
 const API_BASE_URL = "http://localhost:8000/api";
 
 function Inventory() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +31,8 @@ function Inventory() {
   const [searchType, setSearchType] = useState("wise_item_number"); // "all_fields" or "wise_item_number"
   const [isHybridSearch, setIsHybridSearch] = useState(false); // Track if using hybrid search
   const [showScores, setShowScores] = useState(false); // Toggle for showing/hiding search scores
+  const [notFound, setNotFound] = useState(false); // Track if item was not found
+  const [notFoundItemNumber, setNotFoundItemNumber] = useState(""); // Store the item number that wasn't found
 
   // Sort and Filter state
   const [sortBy, setSortBy] = useState("relevance");
@@ -88,6 +92,8 @@ function Inventory() {
 
     setSearchLoading(true);
     setError(null);
+    setNotFound(false);
+    setNotFoundItemNumber("");
 
     try {
       let response;
@@ -103,6 +109,14 @@ function Inventory() {
         );
 
         if (!response.ok) {
+          if (response.status === 404) {
+            // Handle 404 specifically for "not found" case
+            setNotFound(true);
+            setNotFoundItemNumber(query);
+            setIsSearchMode(true);
+            setSearchResults(null);
+            return;
+          }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -183,6 +197,8 @@ function Inventory() {
     setExactMatchId(null);
     setError(null);
     setSearchType("wise_item_number");
+    setNotFound(false);
+    setNotFoundItemNumber("");
     fetchProducts(1);
   };
 
@@ -433,19 +449,29 @@ function Inventory() {
 
       {/* Navigation Tabs */}
       <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-        <div className="flex gap-0">
-          <button className="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50">
-            Products
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Customers
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Locations
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Vendors
-          </button>
+        <div className="flex justify-between items-center">
+          <div className="flex gap-0">
+            <button className="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50">
+              Products
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Customers
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Locations
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Vendors
+            </button>
+          </div>
+          <div className="pr-6">
+            <button
+              onClick={() => navigate("/bulk-upload")}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Bulk Upload
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -499,6 +525,8 @@ function Inventory() {
             onDeleteMatch={handleDeleteMatch}
             onFeedback={handleFeedback}
             alternativesMap={alternativesMap}
+            notFound={notFound}
+            notFoundItemNumber={notFoundItemNumber}
             onAlternativeClick={(wiseItemNumber) => {
               setSearchQuery(wiseItemNumber);
               setSearchType("wise_item_number");

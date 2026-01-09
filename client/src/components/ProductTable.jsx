@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ProductDetailModal from "./ProductDetailModal";
+import NotFound from "./NotFound";
 
 function ProductTable({
   loading,
@@ -19,6 +20,8 @@ function ProductTable({
   onFeedback,
   alternativesMap,
   onAlternativeClick,
+  notFound,
+  notFoundItemNumber,
 }) {
   const [hoveredRowId, setHoveredRowId] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -113,10 +116,14 @@ function ProductTable({
         </div>
       )}
 
-      {error && (
+      {error && !notFound && (
         <div className="text-center py-10 text-red-600 bg-red-50 m-4 rounded-lg border border-red-200">
           <p className="font-semibold">Error: {error}</p>
         </div>
+      )}
+
+      {notFound && !loading && !searchLoading && (
+        <NotFound itemNumber={notFoundItemNumber} />
       )}
 
       {/* Confirmation Modal */}
@@ -162,7 +169,7 @@ function ProductTable({
         </div>
       )}
 
-      {!loading && !searchLoading && !error && (
+      {!loading && !searchLoading && !error && !notFound && (
         <>
           <div className="flex-1 overflow-auto px-5">
             <table className="w-full">
@@ -226,12 +233,11 @@ function ProductTable({
                     return (
                       <tr
                         key={productId}
-                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 cursor-pointer ${
+                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 ${
                           isExactMatch
                             ? "bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-l-green-500 shadow-sm"
                             : ""
                         }`}
-                        onClick={() => handleRowClick(product)}
                         onMouseEnter={() => setHoveredRowId(productId)}
                         onMouseLeave={() => {
                           setHoveredRowId(null);
@@ -284,7 +290,11 @@ function ProductTable({
                           </td>
                         )}
                         <td className="px-4 py-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                          <div
+                            className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center cursor-pointer hover:bg-gray-200 hover:shadow-md transition-all duration-150"
+                            onClick={() => handleRowClick(product)}
+                            title="Click to view details"
+                          >
                             <svg
                               className="w-8 h-8 text-gray-400"
                               fill="none"

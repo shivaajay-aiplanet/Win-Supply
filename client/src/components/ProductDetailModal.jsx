@@ -83,14 +83,14 @@ function ProductDetailModal({ product, isOpen, onClose }) {
       const response = await fetch(
         `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
           wiseItemNumber
-        )}&top_k=5`
+        )}&top_k=20`
       );
 
       if (response.ok) {
         const data = await response.json();
         if (data.results && data.results.length > 0) {
           // Skip the first result (it's the source product itself) and map the rest
-          return data.results.slice(1, 5).map((item) => ({
+          return data.results.slice(1).map((item) => ({
             wiseItemNumber: item.wise_item_number || "N/A",
             vendor: item.brand_name || item.preferred_supplier || "N/A",
             matchScore: item.match_score || 0,
@@ -111,14 +111,14 @@ function ProductDetailModal({ product, isOpen, onClose }) {
       const response = await fetch(
         `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
           wiseItemNumber
-        )}&top_k=5`
+        )}&top_k=20`
       );
 
       if (response.ok) {
         const data = await response.json();
         if (data.results && data.results.length > 0) {
           // Skip the first result (source product) and map the rest
-          const references = data.results.slice(1, 5).map((item) => ({
+          const references = data.results.slice(1).map((item) => ({
             wiseItemNumber: item.wise_item_number || "N/A",
             vendor: item.brand_name || item.preferred_supplier || "N/A",
             matchScore: item.match_score || 0,
@@ -437,8 +437,8 @@ function ProductDetailModal({ product, isOpen, onClose }) {
             </div>
 
             {/* Right Section - Vendor Part Cross References */}
-            <div className="w-80 border-l border-gray-200 pl-6 flex-shrink-0">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="w-80 border-l border-gray-200 pl-6 flex-shrink-0 flex flex-col max-h-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex-shrink-0">
                 Vendor Part Cross References
               </h3>
 
@@ -450,100 +450,104 @@ function ProductDetailModal({ product, isOpen, onClose }) {
                   </p>
                 </div>
               ) : vendorReferences.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead className="border-b border-gray-200">
-                    <tr>
-                      <th className="pb-2 text-left font-medium text-gray-600">
-                        WISE Item Number
-                      </th>
-                      <th className="pb-2 text-left font-medium text-gray-600">
-                        Vendors
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vendorReferences.map((ref, idx) => {
-                      const getColor = (score) => {
-                        if (score === 100) return "#22c55e";
-                        if (score >= 75) return "#22c55e";
-                        if (score >= 50) return "#eab308";
-                        return "#f97316";
-                      };
-                      const scoreColor = getColor(ref.matchScore);
+                <div className="flex-1 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-gray-200 sticky top-0 bg-white">
+                      <tr>
+                        <th className="pb-2 text-left font-medium text-gray-600">
+                          WISE Item Number
+                        </th>
+                        <th className="pb-2 text-left font-medium text-gray-600">
+                          Vendors
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendorReferences.map((ref, idx) => {
+                        const getColor = (score) => {
+                          if (score >= 90) return "#22c55e"; // Green for 90+
+                          if (score >= 80) return "#f97316"; // Orange for 80-89
+                          return "#ef4444"; // Red for below 80
+                        };
+                        const scoreColor = getColor(ref.matchScore);
 
-                      return (
-                        <tr
-                          key={idx}
-                          className="border-b border-gray-100 hover:bg-blue-50"
-                        >
-                          <td className="py-3">
-                            <div className="flex items-start gap-3">
-                              {/* Progress Ring - same as Alternative Product UI */}
-                              <div className="flex-shrink-0">
-                                <svg className="w-10 h-10" viewBox="0 0 36 36">
-                                  {/* Background circle */}
-                                  <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="15.5"
-                                    fill="none"
-                                    stroke="#e5e7eb"
-                                    strokeWidth="3"
-                                  />
-                                  {/* Progress circle */}
-                                  <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="15.5"
-                                    fill="none"
-                                    stroke={scoreColor}
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeDasharray={`${
-                                      ref.matchScore * 0.9738
-                                    } 97.38`}
-                                    transform="rotate(-90 18 18)"
-                                  />
-                                  {/* Score text */}
-                                  <text
-                                    x="18"
-                                    y="18"
-                                    textAnchor="middle"
-                                    dominantBaseline="central"
-                                    fontSize="9"
-                                    fontWeight="bold"
-                                    fill={scoreColor}
+                        return (
+                          <tr
+                            key={idx}
+                            className="border-b border-gray-100 hover:bg-blue-50"
+                          >
+                            <td className="py-3">
+                              <div className="flex items-start gap-3">
+                                {/* Progress Ring - same as Alternative Product UI */}
+                                <div className="flex-shrink-0">
+                                  <svg
+                                    className="w-10 h-10"
+                                    viewBox="0 0 36 36"
                                   >
-                                    {ref.matchScore}
-                                  </text>
-                                </svg>
+                                    {/* Background circle */}
+                                    <circle
+                                      cx="18"
+                                      cy="18"
+                                      r="15.5"
+                                      fill="none"
+                                      stroke="#e5e7eb"
+                                      strokeWidth="3"
+                                    />
+                                    {/* Progress circle */}
+                                    <circle
+                                      cx="18"
+                                      cy="18"
+                                      r="15.5"
+                                      fill="none"
+                                      stroke={scoreColor}
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeDasharray={`${
+                                        ref.matchScore * 0.9738
+                                      } 97.38`}
+                                      transform="rotate(-90 18 18)"
+                                    />
+                                    {/* Score text */}
+                                    <text
+                                      x="18"
+                                      y="18"
+                                      textAnchor="middle"
+                                      dominantBaseline="central"
+                                      fontSize="9"
+                                      fontWeight="bold"
+                                      fill={scoreColor}
+                                    >
+                                      {ref.matchScore}
+                                    </text>
+                                  </svg>
+                                </div>
+                                {/* Alternative details */}
+                                <div className="flex flex-col gap-1">
+                                  <a
+                                    href="#"
+                                    className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                  >
+                                    {ref.wiseItemNumber}
+                                  </a>
+                                  {ref.varyingAttributes &&
+                                    ref.varyingAttributes.length > 0 && (
+                                      <div className="text-xs text-gray-500">
+                                        <span className="font-medium">
+                                          Differs:{" "}
+                                        </span>
+                                        {ref.varyingAttributes.join(", ")}
+                                      </div>
+                                    )}
+                                </div>
                               </div>
-                              {/* Alternative details */}
-                              <div className="flex flex-col gap-1">
-                                <a
-                                  href="#"
-                                  className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                                >
-                                  {ref.wiseItemNumber}
-                                </a>
-                                {ref.varyingAttributes &&
-                                  ref.varyingAttributes.length > 0 && (
-                                    <div className="text-xs text-gray-500">
-                                      <span className="font-medium">
-                                        Differs:{" "}
-                                      </span>
-                                      {ref.varyingAttributes.join(", ")}
-                                    </div>
-                                  )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 text-gray-700">{ref.vendor}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            </td>
+                            <td className="py-3 text-gray-700">{ref.vendor}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p className="text-sm">No similar products found</p>
