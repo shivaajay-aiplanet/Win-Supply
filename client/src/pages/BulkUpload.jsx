@@ -12,6 +12,7 @@ import {
   FiSave,
   FiChevronDown,
   FiChevronUp,
+  FiRotateCcw,
 } from "react-icons/fi";
 import * as XLSX from "xlsx";
 
@@ -45,6 +46,7 @@ function BulkUpload() {
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const [crossRefError, setCrossRefError] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
+  const [excludedMatches, setExcludedMatches] = useState({}); // Track removed matches per source product
 
   // Save state
   const [saveLoading, setSaveLoading] = useState(false);
@@ -198,6 +200,7 @@ function BulkUpload() {
     setCrossRefResults([]);
     setSaveSuccess(false);
     setSaveError(null);
+    setExcludedMatches({});
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -219,6 +222,7 @@ function BulkUpload() {
     setCrossRefError(null);
     setCrossRefResults([]);
     setExpandedRows({});
+    setExcludedMatches({});
     setUploadStatus("uploading");
 
     // Step 1: Upload products to inventory first
@@ -339,6 +343,47 @@ function BulkUpload() {
     }));
   };
 
+  // Handle removing/restoring a match
+  const handleRemoveMatch = (sourceIndex, matchIndex) => {
+    setExcludedMatches((prev) => {
+      const updated = { ...prev };
+      if (!updated[sourceIndex]) {
+        updated[sourceIndex] = new Set();
+      } else {
+        // Create a new Set to ensure React detects the change
+        updated[sourceIndex] = new Set(updated[sourceIndex]);
+      }
+
+      if (updated[sourceIndex].has(matchIndex)) {
+        updated[sourceIndex].delete(matchIndex); // Restore
+      } else {
+        updated[sourceIndex].add(matchIndex); // Remove
+      }
+
+      // If the set is empty, remove it from the object
+      if (updated[sourceIndex].size === 0) {
+        delete updated[sourceIndex];
+      }
+
+      return updated;
+    });
+  };
+
+  // Get active (non-removed) match count for a source
+  const getActiveMatchCount = (sourceIndex, totalMatches) => {
+    const excluded = excludedMatches[sourceIndex];
+    if (!excluded || excluded.size === 0) return totalMatches;
+    return totalMatches - excluded.size;
+  };
+
+  // Get total removed count across all sources
+  const getTotalRemovedCount = () => {
+    return Object.values(excludedMatches).reduce(
+      (sum, set) => sum + set.size,
+      0
+    );
+  };
+
   // Handle Save to database
   const handleSave = async () => {
     if (crossRefResults.length === 0) return;
@@ -348,21 +393,33 @@ function BulkUpload() {
     setSaveSuccess(false);
 
     try {
-      // Prepare data for saving
+      // Prepare data for saving, filtering out excluded matches
       const saveData = crossRefResults
-        .filter(
-          (result) => result.productFound && result.searchResults.length > 0
-        )
-        .map((result) => ({
-          wise_item_number: result.sourceProduct.wise_item_number,
-          llm_matches: result.searchResults.map((match) => ({
-            r: `${match.wise_item_number || match.document?.wise_item_number}|${
-              match.relevance_score
-                ? Math.round(match.relevance_score * 100)
-                : match.match_score || 50
-            }|${(match.varying_attributes || []).join(",")}`,
-          })),
-        }));
+        .map((result, sourceIdx) => {
+          if (!result.productFound || !result.searchResults?.length) return null;
+
+          const excludedSet = excludedMatches[sourceIdx] || new Set();
+
+          // Filter out excluded matches
+          const filteredMatches = result.searchResults
+            .filter((_, matchIdx) => !excludedSet.has(matchIdx))
+            .map((match) => ({
+              r: `${match.wise_item_number || match.document?.wise_item_number}|${
+                match.relevance_score
+                  ? Math.round(match.relevance_score * 100)
+                  : match.match_score || 50
+              }|${(match.varying_attributes || []).join(",")}`,
+            }));
+
+          // Only include if there are matches left after filtering
+          return filteredMatches.length > 0
+            ? {
+                wise_item_number: result.sourceProduct.wise_item_number,
+                llm_matches: filteredMatches,
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove null entries
 
       // Call bulk save API
       const response = await fetch(
@@ -735,7 +792,16 @@ function BulkUpload() {
                                       onClick={() => toggleExpandRow(index)}
                                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
                                     >
-                                      {crossRef.searchResults.length} matches
+                                      {(() => {
+                                        const activeCount = getActiveMatchCount(
+                                          index,
+                                          crossRef.searchResults.length
+                                        );
+                                        const totalCount = crossRef.searchResults.length;
+                                        return activeCount < totalCount
+                                          ? `${activeCount} of ${totalCount} matches`
+                                          : `${totalCount} matches`;
+                                      })()}
                                       {isExpanded ? (
                                         <FiChevronUp className="w-4 h-4" />
                                       ) : (
@@ -786,15 +852,23 @@ function BulkUpload() {
                                           <th className="px-3 py-2 text-left font-semibold text-blue-800">
                                             Varying Attrs
                                           </th>
+                                          <th className="px-3 py-2 text-center font-semibold text-blue-800 w-12">
+                                            Action
+                                          </th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {crossRef.searchResults.map(
-                                          (match, matchIdx) => (
-                                            <tr
-                                              key={matchIdx}
-                                              className="border-t border-blue-200"
-                                            >
+                                          (match, matchIdx) => {
+                                            const isExcluded =
+                                              excludedMatches[index]?.has(matchIdx) || false;
+                                            return (
+                                              <tr
+                                                key={matchIdx}
+                                                className={`border-t border-blue-200 transition-opacity duration-200 ${
+                                                  isExcluded ? "opacity-50" : ""
+                                                }`}
+                                              >
                                               <td className="px-3 py-2 text-blue-700">
                                                 {match.rank || matchIdx + 1}
                                               </td>
@@ -843,8 +917,28 @@ function BulkUpload() {
                                                     )
                                                   : "-"}
                                               </td>
+                                              <td className="px-3 py-2 text-center">
+                                                <button
+                                                  onClick={() =>
+                                                    handleRemoveMatch(index, matchIdx)
+                                                  }
+                                                  className="p-1 rounded hover:bg-blue-200 transition-colors"
+                                                  title={
+                                                    isExcluded
+                                                      ? "Restore this match"
+                                                      : "Remove this match"
+                                                  }
+                                                >
+                                                  {isExcluded ? (
+                                                    <FiRotateCcw className="w-4 h-4 text-green-600" />
+                                                  ) : (
+                                                    <FiX className="w-4 h-4 text-red-500 hover:text-red-700" />
+                                                  )}
+                                                </button>
+                                              </td>
                                             </tr>
-                                          )
+                                            );
+                                          }
                                         )}
                                       </tbody>
                                     </table>
@@ -878,6 +972,15 @@ function BulkUpload() {
                         }
                       </strong>
                     </span>
+                    {(() => {
+                      const removedCount = getTotalRemovedCount();
+                      return removedCount > 0 ? (
+                        <span className="text-purple-600">
+                          Removed Matches:{" "}
+                          <strong>{removedCount}</strong>
+                        </span>
+                      ) : null;
+                    })()}
                     <span className="text-orange-600">
                       Not in Inventory:{" "}
                       <strong>

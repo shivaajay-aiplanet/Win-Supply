@@ -443,11 +443,39 @@ function ProductDetailModal({ product, isOpen, onClose }) {
               </h3>
 
               {vendorLoading ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
-                  <p className="text-sm text-gray-500">
-                    Finding similar products...
-                  </p>
+                <div className="flex-1 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-gray-200 sticky top-0 bg-white">
+                      <tr>
+                        <th className="pb-2 text-left font-medium text-gray-600">
+                          WISE Item Number
+                        </th>
+                        <th className="pb-2 text-left font-medium text-gray-600">
+                          Vendors
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...Array(5)].map((_, idx) => (
+                        <tr key={idx} className="border-b border-gray-100">
+                          <td className="py-3">
+                            <div className="flex items-start gap-3">
+                              {/* Skeleton Progress Ring */}
+                              <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse flex-shrink-0"></div>
+                              {/* Skeleton details */}
+                              <div className="flex flex-col gap-2">
+                                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                                <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : vendorReferences.length > 0 ? (
                 <div className="flex-1 overflow-y-auto">
