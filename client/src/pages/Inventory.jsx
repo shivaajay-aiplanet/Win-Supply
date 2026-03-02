@@ -277,17 +277,30 @@ function Inventory() {
     return filtered;
   };
 
-  // Extract unique brands from search results
+  // Extract unique brands from search results or products
   const getAvailableBrands = () => {
-    if (!searchResults || !searchResults.results) return [];
-
     const brands = new Set();
-    searchResults.results.forEach((item) => {
-      const brandName = item.document?.brand_name;
-      if (brandName && brandName.trim() !== "") {
-        brands.add(brandName);
-      }
-    });
+
+    if (isSearchMode && searchResults?.results) {
+      // Handle search results (both hybrid and regular)
+      searchResults.results.forEach((item) => {
+        // For hybrid search, brand is directly on item
+        // For regular search, brand is on item.document
+        const brandName = isHybridSearch
+          ? item.brand_name
+          : item.document?.brand_name;
+        if (brandName && brandName.trim() !== "") {
+          brands.add(brandName);
+        }
+      });
+    } else if (products && products.length > 0) {
+      // Handle browse mode - get brands from products
+      products.forEach((product) => {
+        if (product.brand_name && product.brand_name.trim() !== "") {
+          brands.add(product.brand_name);
+        }
+      });
+    }
 
     return Array.from(brands).sort();
   };
