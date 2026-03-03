@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import RefineSearch from "../components/RefineSearch";
 import ProductTable from "../components/ProductTable";
+import { authFetch } from "../lib/api";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -47,7 +48,7 @@ function Inventory() {
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/inventory/products?page=${page}&page_size=10`
       );
 
@@ -69,7 +70,7 @@ function Inventory() {
   // Fetch alternatives from cross-reference table
   const fetchAlternatives = async () => {
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/search/cross-reference/alternatives`
       );
 
@@ -103,7 +104,7 @@ function Inventory() {
       // Choose endpoint based on search type
       if (searchType === "wise_item_number") {
         // Hybrid search endpoint for WISE item number
-        response = await fetch(
+        response = await authFetch(
           `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
             query
           )}&top_k=${topK}`
@@ -145,7 +146,7 @@ function Inventory() {
         }
       } else {
         // Regular BM25 keyword search
-        response = await fetch(
+        response = await authFetch(
           `${API_BASE_URL}/search?q=${encodeURIComponent(query)}&top_k=${topK}`
         );
 
@@ -351,7 +352,7 @@ function Inventory() {
     matchedWiseItemNumber
   ) => {
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/search/cross-reference/delete-match?source_wise_item_number=${encodeURIComponent(
           sourceWiseItemNumber
         )}&matched_wise_item_number=${encodeURIComponent(
@@ -390,7 +391,7 @@ function Inventory() {
     feedbackType
   ) => {
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/search/cross-reference/feedback?source_wise_item_number=${encodeURIComponent(
           sourceWiseItemNumber
         )}&matched_wise_item_number=${encodeURIComponent(

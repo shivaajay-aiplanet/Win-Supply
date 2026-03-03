@@ -15,6 +15,7 @@ import {
   FiRotateCcw,
 } from "react-icons/fi";
 import * as XLSX from "xlsx";
+import { authFetch } from "../lib/api";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -237,7 +238,7 @@ function BulkUpload() {
         })),
       };
 
-      const uploadResponse = await fetch(
+      const uploadResponse = await authFetch(
         `${API_BASE_URL}/bulk-upload/upload-products`,
         {
           method: "POST",
@@ -279,7 +280,7 @@ function BulkUpload() {
 
       try {
         // Call the search API for each wise_item_number
-        const response = await fetch(
+        const response = await authFetch(
           `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
             product.wise_item_number
           )}&top_k=10`
@@ -422,7 +423,7 @@ function BulkUpload() {
         .filter(Boolean); // Remove null entries
 
       // Call bulk save API
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/bulk-upload/save-cross-references`,
         {
           method: "POST",

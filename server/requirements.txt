@@ -16,4 +16,6 @@ sentence-transformers==3.3.1
 transformers==4.45.0
 torch==2.5.1
 
-
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
