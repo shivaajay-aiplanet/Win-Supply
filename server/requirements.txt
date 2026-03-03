@@ -11,7 +11,7 @@ numpy==1.26.4
 tqdm==4.66.1
 
 # Phase 3: Reranker - Pin compatible versions
-huggingface-hub==0.26.5
+huggingface-hub>=0.27.0
 sentence-transformers==3.3.1
 transformers==4.45.0
 torch==2.5.1

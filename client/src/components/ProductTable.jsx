@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ProductDetailModal from "./ProductDetailModal";
 import NotFound from "./NotFound";
+import AISearchAnimation from "./AISearchAnimation";
 
 function ProductTable({
   loading,
@@ -108,64 +109,70 @@ function ProductTable({
       />
 
       {(loading || searchLoading) && (
-        <div className="flex-1 overflow-auto px-5">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-blue-200 sticky top-0">
-              <tr>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 w-20 uppercase tracking-wider">
-                  Image
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Item Name
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Brand
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Item Number
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Catalog Number
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                  Alternative Product
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...Array(6)].map((_, index) => (
-                <tr key={index} className="border-b border-gray-100">
-                  <td className="px-4 py-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
-                      <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex-1 overflow-auto">
+          {searchLoading ? (
+            <AISearchAnimation />
+          ) : (
+            <div className="px-5">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-blue-200 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 w-20 uppercase tracking-wider">
+                      Image
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Item Name
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Brand
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Item Number
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Catalog Number
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Alternative Product
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...Array(6)].map((_, index) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="px-4 py-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

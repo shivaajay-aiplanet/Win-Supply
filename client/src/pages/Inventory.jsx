@@ -30,7 +30,7 @@ function Inventory() {
   const [exactMatchId, setExactMatchId] = useState(null);
   const [searchType, setSearchType] = useState("wise_item_number"); // "all_fields" or "wise_item_number"
   const [isHybridSearch, setIsHybridSearch] = useState(false); // Track if using hybrid search
-  const [showScores, setShowScores] = useState(false); // Toggle for showing/hiding search scores
+  const [showScores, setShowScores] = useState(true); // Toggle for showing/hiding search scores
   const [notFound, setNotFound] = useState(false); // Track if item was not found
   const [notFoundItemNumber, setNotFoundItemNumber] = useState(""); // Store the item number that wasn't found
 
@@ -94,6 +94,7 @@ function Inventory() {
     setError(null);
     setNotFound(false);
     setNotFoundItemNumber("");
+    const searchStartTime = Date.now();
 
     try {
       let response;
@@ -179,7 +180,14 @@ function Inventory() {
       setError(err.message);
       console.error("Error searching products:", err);
     } finally {
-      setSearchLoading(false);
+      // Ensure animation plays for at least 3 seconds so users see the stages
+      const elapsed = Date.now() - searchStartTime;
+      const minDisplayTime = 3000;
+      if (elapsed < minDisplayTime) {
+        setTimeout(() => setSearchLoading(false), minDisplayTime - elapsed);
+      } else {
+        setSearchLoading(false);
+      }
     }
   };
 
