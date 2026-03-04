@@ -12,6 +12,7 @@
 services:
   # ---- PostgreSQL ----
   postgres:
+    restart: unless-stopped
     image: postgres:16-alpine
     container_name: win-supply-postgres
     environment:
@@ -33,6 +34,7 @@ services:
 
   # ---- OpenSearch (Single Node) ----
   opensearch:
+    restart: unless-stopped
     image: opensearchproject/opensearch:3.3.2
     container_name: win-supply-opensearch
     environment:
@@ -67,6 +69,7 @@ services:
 
   # ---- Ollama (Embedding Service) ----
   ollama:
+    restart: unless-stopped
     image: ollama/ollama:latest
     container_name: win-supply-ollama
     ports:
@@ -107,6 +110,7 @@ services:
 
   # ---- FastAPI Backend ----
   backend:
+    restart: unless-stopped
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -139,6 +143,7 @@ services:
 
   # ---- Frontend (React + Nginx) ----
   frontend:
+    restart: unless-stopped
     build:
       context: ./client
       dockerfile: Dockerfile

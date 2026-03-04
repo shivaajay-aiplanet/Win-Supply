@@ -17,6 +17,84 @@ body,
 }
 
 /* ==============================
+   Login Page Animations
+   ============================== */
+
+.login-orb-1 {
+  top: -15%;
+  right: -10%;
+  background: radial-gradient(circle, #93c5fd 0%, #bfdbfe 50%, transparent 70%);
+  animation: loginOrbFloat1 8s ease-in-out infinite;
+}
+
+.login-orb-2 {
+  bottom: -10%;
+  left: -5%;
+  background: radial-gradient(circle, #a5b4fc 0%, #c7d2fe 50%, transparent 70%);
+  animation: loginOrbFloat2 10s ease-in-out infinite;
+}
+
+@keyframes loginOrbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30px, 20px) scale(1.05); }
+  66% { transform: translate(20px, -15px) scale(0.95); }
+}
+
+@keyframes loginOrbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(25px, -20px) scale(1.08); }
+  66% { transform: translate(-15px, 25px) scale(0.92); }
+}
+
+.login-fade-in {
+  animation: loginFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loginFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card {
+  animation: loginCardIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes loginCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+
+.login-btn:hover::after {
+  transform: translateX(100%);
+}
+
+/* ==============================
    AI Search — Unified Animation
    Single continuous 11.2s loop
    S1: 0–25%   S2: 25–50%
