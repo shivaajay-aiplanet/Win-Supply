@@ -287,6 +287,58 @@ def get_all_top_alternatives() -> Dict[str, Dict[str, Any]]:
             conn.close()
 
 
+def get_cached_cross_references_for_item(
+    wise_item_number: str, top_k: int = 20
+) -> Dict[str, Any]:
+    """
+    Get cached cross-reference matches for a specific item with full product details.
+    Returns enriched results directly from the cache without running any search pipeline.
+
+    Args:
+        wise_item_number: The source product's WISE item number
+        top_k: Maximum number of results to return
+
+    Returns:
+        dict: {"found": bool, "results": [...enriched products...], "total": int}
+    """
+    # Check if we have cached matches
+    cached_matches = get_cached_llm_matches(wise_item_number)
+
+    if cached_matches is None:
+        return {"found": False, "results": [], "total": 0}
+
+    # Parse compact format to standard format
+    parsed_results = parse_compact_llm_format(cached_matches)
+
+    if not parsed_results:
+        return {"found": True, "results": [], "total": 0}
+
+    # Sort by match_score descending
+    parsed_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+
+    # Filter out the source product itself and take top_k
+    filtered_results = [
+        r for r in parsed_results if r.get("wise_item_number") != wise_item_number
+    ][:top_k]
+
+    if not filtered_results:
+        return {"found": True, "results": [], "total": 0}
+
+    # Fetch full product details from database
+    wise_item_numbers = [
+        r.get("wise_item_number") for r in filtered_results if r.get("wise_item_number")
+    ]
+    products_from_db = get_products_by_wise_item_numbers(wise_item_numbers)
+
+    # Enrich with database data
+    enriched_results = _enrich_results_with_db(filtered_results, products_from_db)
+
+    logger.info(
+        f"Returning {len(enriched_results)} cached cross-references for {wise_item_number}"
+    )
+    return {"found": True, "results": enriched_results, "total": len(enriched_results)}
+
+
 def save_llm_matches_to_cache(
     wise_item_number: str, llm_matches: List[Dict[str, Any]]
 ) -> bool:

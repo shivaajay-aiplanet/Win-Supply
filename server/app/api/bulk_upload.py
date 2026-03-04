@@ -53,7 +53,7 @@ class CrossReferenceEntry(BaseModel):
     """Model for a cross-reference entry."""
 
     wise_item_number: str
-    llm_matches: List[CrossReferenceMatch]
+    ai_matches: List[CrossReferenceMatch]
 
 
 class BulkCrossReferenceRequest(BaseModel):
@@ -70,7 +70,7 @@ async def save_cross_references(request: BulkCrossReferenceRequest):
     This endpoint handles bulk saving of cross-reference data from the bulk upload process.
     Uses UPSERT to handle duplicates - existing entries will be updated.
 
-    - **cross_references**: List of cross-reference entries with wise_item_number and llm_matches
+    - **cross_references**: List of cross-reference entries with wise_item_number and ai_matches
 
     Returns:
     - **success**: Whether the operation was successful
@@ -101,7 +101,7 @@ async def save_cross_references(request: BulkCrossReferenceRequest):
                 existing = cursor.fetchone()
 
                 # Convert matches to JSON-serializable format
-                llm_matches_json = [{"r": match.r} for match in entry.llm_matches]
+                ai_matches_json = [{"r": match.r} for match in entry.ai_matches]
 
                 # Use UPSERT to save or update
                 cursor.execute(
@@ -111,7 +111,7 @@ async def save_cross_references(request: BulkCrossReferenceRequest):
                     ON CONFLICT (wise_item_number)
                     DO UPDATE SET llm_matches = EXCLUDED.llm_matches, updated_at = CURRENT_TIMESTAMP
                     """,
-                    (entry.wise_item_number, json.dumps(llm_matches_json)),
+                    (entry.wise_item_number, json.dumps(ai_matches_json)),
                 )
 
                 if existing:

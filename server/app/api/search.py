@@ -14,6 +14,7 @@ from app.services.search_service import (
 from app.services.llm_matching_service import (
     delete_match_from_cross_reference,
     get_all_top_alternatives,
+    get_cached_cross_references_for_item,
     update_match_feedback,
     get_match_feedback,
 )
@@ -185,7 +186,7 @@ async def delete_cross_reference_match(
     """
     Delete a specific matched product from the cross-reference cache.
 
-    This endpoint removes a single match from the llm_matches JSONB array for a given
+    This endpoint removes a single match from the matches JSONB array for a given
     source product. Used when a user reports an incorrect product match.
 
     - **source_wise_item_number**: The WISE item number of the source product (search query)
@@ -217,6 +218,40 @@ async def delete_cross_reference_match(
     except Exception as e:
         logger.error(f"Delete cross-reference match error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
+
+@router.get("/search/cross-reference/item/{wise_item_number}")
+async def get_cross_reference_for_item(
+    wise_item_number: str,
+    top_k: int = Query(20, ge=1, le=100, description="Number of results to return"),
+):
+    """
+    Get cached cross-reference matches for a specific item with full product details.
+    This is a fast lookup that only checks the cross_reference cache table.
+    No AI search pipeline is executed.
+
+    - **wise_item_number**: WISE item number to look up (required)
+    - **top_k**: Number of top results to return (default: 20, max: 100)
+
+    Returns:
+    - **found**: Whether cached cross-references exist for this item
+    - **results**: Array of matched products with full details and scores
+    - **total**: Number of results returned
+    """
+    try:
+        logger.info(
+            f"Cross-reference lookup for: {wise_item_number}, top_k: {top_k}"
+        )
+        result = get_cached_cross_references_for_item(
+            wise_item_number=wise_item_number, top_k=top_k
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Cross-reference lookup error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cross-reference lookup failed: {str(e)}",
+        )
 
 
 @router.get("/search/cross-reference/alternatives")

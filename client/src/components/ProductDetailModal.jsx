@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { authFetch } from "../lib/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
@@ -7,6 +8,7 @@ function ProductDetailModal({ product, isOpen, onClose }) {
   const [iofOnly, setIofOnly] = useState(false);
   const [vendorReferences, setVendorReferences] = useState([]);
   const [vendorLoading, setVendorLoading] = useState(false);
+  const [isAISearching, setIsAISearching] = useState(false); // Track if running AI search on the fly
 
   const tabs = [
     { id: "all", label: "All" },
@@ -39,76 +41,53 @@ function ProductDetailModal({ product, isOpen, onClose }) {
     // Reset state when modal closes
     if (!isOpen) {
       setVendorReferences([]);
+      setIsAISearching(false);
     }
   }, [isOpen, product?.wise_item_number]);
 
-  // Fetch vendor cross references from API
+  // Map API results to display format
+  const mapResultsToReferences = (results) => {
+    return results.map((item) => ({
+      wiseItemNumber: item.wise_item_number || "N/A",
+      vendor: item.brand_name || item.preferred_supplier || "N/A",
+      matchScore: item.match_score || 0,
+      varyingAttributes: item.varying_attributes || [],
+    }));
+  };
+
+  // Fetch vendor cross references - Step 1: Cache, Step 2: AI Search
   const fetchVendorCrossReferences = async (wiseItemNumber) => {
     setVendorLoading(true);
+    setIsAISearching(false);
+
     try {
-      // First, try to get cross-reference alternatives from the database
-      const altResponse = await fetch(
-        `${API_BASE_URL}/search/cross-reference/alternatives`
+      // Step 1: Check cross-reference cache for this specific item
+      const cacheResponse = await authFetch(
+        `${API_BASE_URL}/search/cross-reference/item/${encodeURIComponent(wiseItemNumber)}?top_k=20`
       );
 
-      if (altResponse.ok) {
-        const altData = await altResponse.json();
-
-        // Check if we have alternatives for this wise_item_number
-        if (altData.alternatives && altData.alternatives[wiseItemNumber]) {
-          // We have cross-reference data, now fetch product details for similar items
-          const similarProducts = await fetchSimilarProductDetails(
-            wiseItemNumber
-          );
-          if (similarProducts.length > 0) {
-            setVendorReferences(similarProducts);
-            setVendorLoading(false);
-            return;
-          }
+      if (cacheResponse.ok) {
+        const cacheData = await cacheResponse.json();
+        if (cacheData.found && cacheData.results && cacheData.results.length > 0) {
+          // Cache HIT - show cached results immediately
+          setVendorReferences(mapResultsToReferences(cacheData.results));
+          setVendorLoading(false);
+          return;
         }
       }
-
-      // If no cross-reference data found, perform hybrid search
-      await performHybridSearch(wiseItemNumber);
     } catch (error) {
-      console.error("Error fetching vendor cross references:", error);
-      // Fallback to hybrid search on error
-      await performHybridSearch(wiseItemNumber);
+      console.error("Error checking cross-reference cache:", error);
     }
+
+    // Step 2: No cache found - perform full AI search on the fly
+    setIsAISearching(true);
+    await performHybridSearch(wiseItemNumber);
   };
 
-  // Fetch similar product details from cross-reference
-  const fetchSimilarProductDetails = async (wiseItemNumber) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
-          wiseItemNumber
-        )}&top_k=20`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.results && data.results.length > 0) {
-          // Skip the first result (it's the source product itself) and map the rest
-          return data.results.slice(1).map((item) => ({
-            wiseItemNumber: item.wise_item_number || "N/A",
-            vendor: item.brand_name || item.preferred_supplier || "N/A",
-            matchScore: item.match_score || 0,
-            varyingAttributes: item.varying_attributes || [],
-          }));
-        }
-      }
-      return [];
-    } catch (error) {
-      console.error("Error fetching similar product details:", error);
-      return [];
-    }
-  };
-
-  // Perform hybrid + LLM search for similar products
+  // Perform hybrid + AI search for similar products (full AI pipeline)
   const performHybridSearch = async (wiseItemNumber) => {
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
           wiseItemNumber
         )}&top_k=20`
@@ -117,14 +96,11 @@ function ProductDetailModal({ product, isOpen, onClose }) {
       if (response.ok) {
         const data = await response.json();
         if (data.results && data.results.length > 0) {
-          // Skip the first result (source product) and map the rest
-          const references = data.results.slice(1).map((item) => ({
-            wiseItemNumber: item.wise_item_number || "N/A",
-            vendor: item.brand_name || item.preferred_supplier || "N/A",
-            matchScore: item.match_score || 0,
-            varyingAttributes: item.varying_attributes || [],
-          }));
-          setVendorReferences(references);
+          // Filter out the source product itself
+          const filtered = data.results.filter(
+            (item) => item.wise_item_number !== wiseItemNumber
+          );
+          setVendorReferences(mapResultsToReferences(filtered));
         } else {
           setVendorReferences([]);
         }
@@ -136,6 +112,7 @@ function ProductDetailModal({ product, isOpen, onClose }) {
       setVendorReferences([]);
     } finally {
       setVendorLoading(false);
+      setIsAISearching(false);
     }
   };
 
@@ -444,6 +421,19 @@ function ProductDetailModal({ product, isOpen, onClose }) {
 
               {vendorLoading ? (
                 <div className="flex-1 overflow-y-auto">
+                  {isAISearching && (
+                    <div className="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span className="text-xs font-medium text-blue-700">
+                          AI Search in progress...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <table className="w-full text-sm">
                     <thead className="border-b border-gray-200 sticky top-0 bg-white">
                       <tr>

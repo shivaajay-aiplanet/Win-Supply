@@ -416,7 +416,7 @@ function BulkUpload() {
           return filteredMatches.length > 0
             ? {
                 wise_item_number: result.sourceProduct.wise_item_number,
-                llm_matches: filteredMatches,
+                ai_matches: filteredMatches,
               }
             : null;
         })
