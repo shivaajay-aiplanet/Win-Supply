@@ -1,0 +1,169 @@
+[     617ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[     617ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[     618ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:359:5
+    at commitHookEffectListMount (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18119:15)
+    at commitPassiveMountEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19490:11)
+    at flushPassiveEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19447:22)
+    at http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19328:17 @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[     661ms] [ERROR] Access to fetch at 'http://localhost:8000/api/search/cross-reference/alternatives' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[     661ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/search/cross-reference/alternatives:0
+[     661ms] [ERROR] Error fetching alternatives: TypeError: Failed to fetch
+    at fetchAlternatives (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:75:30)
+    at http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:360:5
+    at commitHookEffectListMount (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18119:15)
+    at commitPassiveMountEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19490:11)
+    at flushPassiveEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19447:22)
+    at http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19328:17 @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:84
+[     848ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[     849ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[     849ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:359:5
+    at commitHookEffectListMount (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18324:19)
+    at invokeEffectsInDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19503:13)
+    at flushPassiveEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19447:22)
+    at http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19328:17
+    at workLoop (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:197:42) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[     895ms] [ERROR] Access to fetch at 'http://localhost:8000/api/search/cross-reference/alternatives' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[     895ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/search/cross-reference/alternatives:0
+[     896ms] [ERROR] Error fetching alternatives: TypeError: Failed to fetch
+    at fetchAlternatives (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:75:30)
+    at http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:360:5
+    at commitHookEffectListMount (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:18324:19)
+    at invokeEffectsInDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19503:13)
+    at flushPassiveEffects (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19447:22)
+    at http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:19328:17
+    at workLoop (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:197:42) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:84
+[   11265ms] [ERROR] Access to fetch at 'http://localhost:8000/api/search/wise-item?wise_item_number=12345&top_k=20' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   11265ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/search/wise-item?wise_item_number=12345&top_k=20:0
+[   11265ms] [ERROR] Error searching products: TypeError: Failed to fetch
+    at searchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:101:26)
+    at handleSearch (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:168:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13)
+    at dispatchEventsForPlugins (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7051:11) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:155
+[   40872ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   40873ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   40873ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13)
+    at dispatchEventsForPlugins (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7051:11) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   59917ms] [ERROR] Access to fetch at 'http://localhost:8000/api/search/wise-item?wise_item_number=99999&top_k=20' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   59917ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/search/wise-item?wise_item_number=99999&top_k=20:0
+[   59918ms] [ERROR] Error searching products: TypeError: Failed to fetch
+    at searchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:101:26)
+    at handleSearch (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:168:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13)
+    at dispatchEventsForPlugins (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7051:11) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:155
+[   87083ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   87083ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   87083ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   89887ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   89887ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   89889ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   91750ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   91750ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   91750ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   92216ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   92217ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   92217ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   92362ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   92362ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   92362ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67
+[   92511ms] [ERROR] Access to fetch at 'http://localhost:8000/api/inventory/products?page=1&page_size=10' from origin 'http://localhost:5175' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/:0
+[   92511ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/inventory/products?page=1&page_size=10:0
+[   92511ms] [ERROR] Error fetching products: TypeError: Failed to fetch
+    at window.fetch (eval at evaluate (:301:30), <anonymous>:9:12)
+    at fetchProducts (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:57:30)
+    at handleReset (http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:180:5)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3699:24)
+    at invokeGuardedCallback (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:3736:33)
+    at executeDispatch (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7014:11)
+    at processDispatchQueueItemsInOrder (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7034:15)
+    at processDispatchQueue (http://localhost:5175/node_modules/.vite/deps/chunk-TYILIMWK.js?v=772dd5aa:7043:13) @ http://localhost:5175/src/pages/Inventory.jsx?t=1772540918514:67

@@ -1,7 +1,9 @@
 import React from "react";
-import { FiSearch, FiBell, FiSettings, FiHelpCircle } from "react-icons/fi";
+import { FiSearch, FiBell, FiSettings, FiHelpCircle, FiLogOut } from "react-icons/fi";
+import { useAuth } from "../contexts/AuthContext";
 
 function Header({ showScores, toggleScores }) {
+  const { user, logout } = useAuth();
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 flex justify-between items-center shadow-md flex-shrink-0">
       <div className="flex items-center gap-4">
@@ -51,10 +53,22 @@ function Header({ showScores, toggleScores }) {
           <FiHelpCircle className="w-5 h-5 text-white" />
         </button>
 
-        <div className="text-right text-sm ml-2 pl-3 border-l border-blue-500">
-          <div className="text-white text-xs font-medium">
-            WICS - IT Shared Services
-          </div>
+        <div className="flex items-center gap-3 ml-2 pl-3 border-l border-blue-500">
+          {user && (
+            <>
+              <div className="text-white text-xs font-medium">
+                {user.display_name}
+              </div>
+              <button
+                onClick={logout}
+                className="p-2 rounded-lg hover:bg-blue-500 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+                aria-label="Logout"
+                title="Sign out"
+              >
+                <FiLogOut className="w-5 h-5 text-white" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

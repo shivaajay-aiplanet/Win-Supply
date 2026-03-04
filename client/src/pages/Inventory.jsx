@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import RefineSearch from "../components/RefineSearch";
 import ProductTable from "../components/ProductTable";
+import { authFetch } from "../lib/api";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
 function Inventory() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,15 +27,20 @@ function Inventory() {
   const [searchResults, setSearchResults] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [topK, setTopK] = useState(20);
+  const topK = 20; // Fixed value for search results limit
   const [exactMatchId, setExactMatchId] = useState(null);
-  const [searchType, setSearchType] = useState("all_fields"); // "all_fields" or "wise_item_number"
+  const [searchType, setSearchType] = useState("wise_item_number"); // "all_fields" or "wise_item_number"
   const [isHybridSearch, setIsHybridSearch] = useState(false); // Track if using hybrid search
-  const [showScores, setShowScores] = useState(false); // Toggle for showing/hiding search scores
+  const [showScores, setShowScores] = useState(true); // Toggle for showing/hiding search scores
+  const [notFound, setNotFound] = useState(false); // Track if item was not found
+  const [notFoundItemNumber, setNotFoundItemNumber] = useState(""); // Store the item number that wasn't found
 
   // Sort and Filter state
   const [sortBy, setSortBy] = useState("relevance");
   const [brandFilter, setBrandFilter] = useState("");
+
+  // Alternatives state
+  const [alternativesMap, setAlternativesMap] = useState({});
 
   // Fetch products from API
   const fetchProducts = async (page = 1) => {
@@ -40,7 +48,7 @@ function Inventory() {
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${API_BASE_URL}/inventory/products?page=${page}&page_size=10`
       );
 
@@ -59,6 +67,24 @@ function Inventory() {
     }
   };
 
+  // Fetch alternatives from cross-reference table
+  const fetchAlternatives = async () => {
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/search/cross-reference/alternatives`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.alternatives) {
+          setAlternativesMap(data.alternatives);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching alternatives:", err);
+    }
+  };
+
   // Search products using BM25 or Hybrid Search
   const searchProducts = async (query) => {
     if (!query.trim()) {
@@ -67,6 +93,9 @@ function Inventory() {
 
     setSearchLoading(true);
     setError(null);
+    setNotFound(false);
+    setNotFoundItemNumber("");
+    const searchStartTime = Date.now();
 
     try {
       let response;
@@ -75,13 +104,21 @@ function Inventory() {
       // Choose endpoint based on search type
       if (searchType === "wise_item_number") {
         // Hybrid search endpoint for WISE item number
-        response = await fetch(
+        response = await authFetch(
           `${API_BASE_URL}/search/wise-item?wise_item_number=${encodeURIComponent(
             query
           )}&top_k=${topK}`
         );
 
         if (!response.ok) {
+          if (response.status === 404) {
+            // Handle 404 specifically for "not found" case
+            setNotFound(true);
+            setNotFoundItemNumber(query);
+            setIsSearchMode(true);
+            setSearchResults(null);
+            return;
+          }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -109,7 +146,7 @@ function Inventory() {
         }
       } else {
         // Regular BM25 keyword search
-        response = await fetch(
+        response = await authFetch(
           `${API_BASE_URL}/search?q=${encodeURIComponent(query)}&top_k=${topK}`
         );
 
@@ -144,7 +181,14 @@ function Inventory() {
       setError(err.message);
       console.error("Error searching products:", err);
     } finally {
-      setSearchLoading(false);
+      // Ensure animation plays for at least 3 seconds so users see the stages
+      const elapsed = Date.now() - searchStartTime;
+      const minDisplayTime = 3000;
+      if (elapsed < minDisplayTime) {
+        setTimeout(() => setSearchLoading(false), minDisplayTime - elapsed);
+      } else {
+        setSearchLoading(false);
+      }
     }
   };
 
@@ -161,7 +205,9 @@ function Inventory() {
     setIsHybridSearch(false);
     setExactMatchId(null);
     setError(null);
-    setSearchType("all_fields");
+    setSearchType("wise_item_number");
+    setNotFound(false);
+    setNotFoundItemNumber("");
     fetchProducts(1);
   };
 
@@ -240,17 +286,30 @@ function Inventory() {
     return filtered;
   };
 
-  // Extract unique brands from search results
+  // Extract unique brands from search results or products
   const getAvailableBrands = () => {
-    if (!searchResults || !searchResults.results) return [];
-
     const brands = new Set();
-    searchResults.results.forEach((item) => {
-      const brandName = item.document?.brand_name;
-      if (brandName && brandName.trim() !== "") {
-        brands.add(brandName);
-      }
-    });
+
+    if (isSearchMode && searchResults?.results) {
+      // Handle search results (both hybrid and regular)
+      searchResults.results.forEach((item) => {
+        // For hybrid search, brand is directly on item
+        // For regular search, brand is on item.document
+        const brandName = isHybridSearch
+          ? item.brand_name
+          : item.document?.brand_name;
+        if (brandName && brandName.trim() !== "") {
+          brands.add(brandName);
+        }
+      });
+    } else if (products && products.length > 0) {
+      // Handle browse mode - get brands from products
+      products.forEach((product) => {
+        if (product.brand_name && product.brand_name.trim() !== "") {
+          brands.add(product.brand_name);
+        }
+      });
+    }
 
     return Array.from(brands).sort();
   };
@@ -287,9 +346,109 @@ function Inventory() {
     return processedProducts;
   };
 
-  // Fetch products on component mount
+  // Handle deleting a match from cross-reference
+  const handleDeleteMatch = async (
+    sourceWiseItemNumber,
+    matchedWiseItemNumber
+  ) => {
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/search/cross-reference/delete-match?source_wise_item_number=${encodeURIComponent(
+          sourceWiseItemNumber
+        )}&matched_wise_item_number=${encodeURIComponent(
+          matchedWiseItemNumber
+        )}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove the deleted match from search results
+      if (searchResults && searchResults.results) {
+        const updatedResults = searchResults.results.filter(
+          (item) => item.wise_item_number !== matchedWiseItemNumber
+        );
+        setSearchResults({
+          ...searchResults,
+          results: updatedResults,
+          returned_count: updatedResults.length,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting match:", error);
+      throw error;
+    }
+  };
+
+  // Handle like/dislike feedback for a match
+  const handleFeedback = async (
+    sourceWiseItemNumber,
+    matchedWiseItemNumber,
+    feedbackType
+  ) => {
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/search/cross-reference/feedback?source_wise_item_number=${encodeURIComponent(
+          sourceWiseItemNumber
+        )}&matched_wise_item_number=${encodeURIComponent(
+          matchedWiseItemNumber
+        )}&feedback_type=${encodeURIComponent(feedbackType)}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // If the match was removed due to too many dislikes, remove from results
+      if (data.removed) {
+        if (searchResults && searchResults.results) {
+          const updatedResults = searchResults.results.filter(
+            (item) => item.wise_item_number !== matchedWiseItemNumber
+          );
+          setSearchResults({
+            ...searchResults,
+            results: updatedResults,
+            returned_count: updatedResults.length,
+          });
+        }
+      } else {
+        // Update the like/dislike counts in the search results
+        if (searchResults && searchResults.results) {
+          const updatedResults = searchResults.results.map((item) => {
+            if (item.wise_item_number === matchedWiseItemNumber) {
+              return {
+                ...item,
+                likes: data.likes,
+                dislikes: data.dislikes,
+              };
+            }
+            return item;
+          });
+          setSearchResults({
+            ...searchResults,
+            results: updatedResults,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      throw error;
+    }
+  };
+
+  // Fetch products and alternatives on component mount
   useEffect(() => {
     fetchProducts(1);
+    fetchAlternatives();
   }, []);
 
   // Handle page navigation
@@ -306,25 +465,35 @@ function Inventory() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 flex flex-col overflow-hidden ">
+    <div className="h-full w-full bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 flex flex-col overflow-hidden">
       {/* Header */}
       <Header showScores={showScores} toggleScores={toggleScores} />
 
       {/* Navigation Tabs */}
       <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-        <div className="flex gap-0">
-          <button className="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50">
-            Products
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Customers
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Locations
-          </button>
-          <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            Vendors
-          </button>
+        <div className="flex justify-between items-center">
+          <div className="flex gap-0">
+            <button className="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50">
+              Products
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Customers
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Locations
+            </button>
+            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              Vendors
+            </button>
+          </div>
+          <div className="pr-6">
+            <button
+              onClick={() => navigate("/bulk-upload")}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Bulk Upload
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -344,15 +513,9 @@ function Inventory() {
             setSearchQuery={setSearchQuery}
             searchType={searchType}
             setSearchType={setSearchType}
-            topK={topK}
-            setTopK={setTopK}
             handleSearch={handleSearch}
             handleReset={handleReset}
             searchLoading={searchLoading}
-            isSearchMode={isSearchMode}
-            searchResults={searchResults}
-            isHybridSearch={isHybridSearch}
-            exactMatchId={exactMatchId}
           />
         </div>
 
@@ -380,6 +543,17 @@ function Inventory() {
             handlePreviousPage={handlePreviousPage}
             handleNextPage={handleNextPage}
             showScores={showScores}
+            sourceWiseItemNumber={searchResults?.wise_item_number}
+            onDeleteMatch={handleDeleteMatch}
+            onFeedback={handleFeedback}
+            alternativesMap={alternativesMap}
+            notFound={notFound}
+            notFoundItemNumber={notFoundItemNumber}
+            onAlternativeClick={(wiseItemNumber) => {
+              setSearchQuery(wiseItemNumber);
+              setSearchType("wise_item_number");
+              searchProducts(wiseItemNumber);
+            }}
           />
         </div>
       </div>

@@ -1,0 +1,172 @@
+# ============================================
+# Win Supply Product Search — Full Stack
+# ============================================
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose down           # Stop all services
+#   docker-compose down -v        # Stop + remove volumes (full reset)
+#   docker-compose logs -f        # Follow all logs
+#   docker-compose logs backend   # Follow specific service
+# ============================================
+
+services:
+  # ---- PostgreSQL ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: win-supply-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: win_supply_inv
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d win_supply_inv"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  # ---- OpenSearch (Single Node) ----
+  opensearch:
+    image: opensearchproject/opensearch:3.3.2
+    container_name: win-supply-opensearch
+    environment:
+      - discovery.type=single-node
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=W!nSupply#2024Adm
+      - path.repo=/usr/share/opensearch/snapshots
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+      - ./opensearch-snapshots:/usr/share/opensearch/snapshots
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -u admin:W!nSupply#2024Adm https://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
+
+  # ---- Ollama (Embedding Service) ----
+  ollama:
+    image: ollama/ollama:latest
+    container_name: win-supply-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - app-network
+
+  # ---- Ollama Model Init (runs once to pull embedding model) ----
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: win-supply-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c '
+        echo "Checking if model nomic-embed-text:v1.5 is available..."
+        TAGS=$$(curl -s http://ollama:11434/api/tags)
+        if echo "$$TAGS" | grep -q "nomic-embed-text"; then
+          echo "Model already available, skipping pull."
+        else
+          echo "Pulling nomic-embed-text:v1.5 — this may take a few minutes..."
+          curl -X POST http://ollama:11434/api/pull -d "{\"name\": \"nomic-embed-text:v1.5\"}"
+          echo ""
+          echo "Model pull complete."
+        fi
+      '
+    networks:
+      - app-network
+
+  # ---- FastAPI Backend ----
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: win-supply-backend
+    env_file:
+      - .env.docker
+    environment:
+      # These override .env.docker values with Docker service names
+      POSTGRES_CONNECTION_STRING: postgresql://postgres:postgres@postgres:5432/win_supply_inv
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: "9200"
+      OLLAMA_HOST: http://ollama:11434
+      PROGRESS_DB_PATH: /app/data/embedding_progress.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
+      - backend-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+
+  # ---- Frontend (React + Nginx) ----
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: /api
+    container_name: win-supply-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+    driver: local
+  opensearch-data:
+    driver: local
+  ollama-data:
+    driver: local
+  huggingface-cache:
+    driver: local
+  backend-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
