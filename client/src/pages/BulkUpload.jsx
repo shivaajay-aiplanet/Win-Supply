@@ -17,7 +17,7 @@ import {
 import * as XLSX from "xlsx";
 import { authFetch } from "../lib/api";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
 // Required headers in the Excel file
 const REQUIRED_HEADERS = [
