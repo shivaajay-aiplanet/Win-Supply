@@ -22,6 +22,7 @@ function ProductTable({
   alternativesMap,
   notFound,
   notFoundItemNumber,
+  onAlternativesUpdated,
 }) {
   const [hoveredRowId, setHoveredRowId] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -111,6 +112,7 @@ function ProductTable({
         product={selectedProduct}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onAlternativesUpdated={onAlternativesUpdated}
       />
 
       {(loading || searchLoading) && (

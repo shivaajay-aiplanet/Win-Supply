@@ -3,7 +3,7 @@ import { authFetch } from "../lib/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
-function ProductDetailModal({ product, isOpen, onClose }) {
+function ProductDetailModal({ product, isOpen, onClose, onAlternativesUpdated }) {
   const [activeTab, setActiveTab] = useState("all");
   const [iofOnly, setIofOnly] = useState(false);
   const [vendorReferences, setVendorReferences] = useState([]);
@@ -113,6 +113,8 @@ function ProductDetailModal({ product, isOpen, onClose }) {
     } finally {
       setVendorLoading(false);
       setIsAISearching(false);
+      // Notify parent that new cross-reference data was cached
+      if (onAlternativesUpdated) onAlternativesUpdated();
     }
   };
 

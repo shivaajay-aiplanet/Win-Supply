@@ -144,6 +144,9 @@ function Inventory() {
         if (transformedData.results.length > 0) {
           setExactMatchId(transformedData.results[0].id);
         }
+
+        // Re-fetch alternatives since hybrid search caches new cross-reference data
+        fetchAlternatives();
       } else {
         // Regular BM25 keyword search
         response = await authFetch(
@@ -209,6 +212,7 @@ function Inventory() {
     setNotFound(false);
     setNotFoundItemNumber("");
     fetchProducts(1);
+    fetchAlternatives();
   };
 
   // Toggle search scores visibility
@@ -549,6 +553,7 @@ function Inventory() {
             alternativesMap={alternativesMap}
             notFound={notFound}
             notFoundItemNumber={notFoundItemNumber}
+            onAlternativesUpdated={fetchAlternatives}
           />
         </div>
       </div>
