@@ -476,13 +476,13 @@ function Inventory() {
             <button className="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50">
               Products
             </button>
-            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <button disabled className="px-6 py-4 text-sm font-medium text-gray-400 cursor-not-allowed opacity-50">
               Customers
             </button>
-            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <button disabled className="px-6 py-4 text-sm font-medium text-gray-400 cursor-not-allowed opacity-50">
               Locations
             </button>
-            <button className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <button disabled className="px-6 py-4 text-sm font-medium text-gray-400 cursor-not-allowed opacity-50">
               Vendors
             </button>
           </div>
@@ -549,11 +549,6 @@ function Inventory() {
             alternativesMap={alternativesMap}
             notFound={notFound}
             notFoundItemNumber={notFoundItemNumber}
-            onAlternativeClick={(wiseItemNumber) => {
-              setSearchQuery(wiseItemNumber);
-              setSearchType("wise_item_number");
-              searchProducts(wiseItemNumber);
-            }}
           />
         </div>
       </div>

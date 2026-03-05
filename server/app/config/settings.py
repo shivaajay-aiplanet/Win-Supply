@@ -58,3 +58,9 @@ AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT", "o4-mini")
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
 LLM_BATCH_SIZE = int(os.getenv("LLM_BATCH_SIZE", "50"))
 LLM_MAX_RESULTS = int(os.getenv("LLM_MAX_RESULTS", "20"))
+
+# Auth Configuration
+DEMO_USERNAME = os.getenv("DEMO_USERNAME", "demo")
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "Demo@Secure#2026")
+DEMO_DISPLAY_NAME = os.getenv("DEMO_DISPLAY_NAME", "Demo User")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "winsupply-demo-secret-key-change-in-production")

@@ -1,25 +1,26 @@
 """
 Authentication API endpoints.
-Hardcoded demo credentials for basic auth.
+Credentials loaded from environment variables.
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from jose import jwt
+from app.config.settings import DEMO_USERNAME, DEMO_PASSWORD, DEMO_DISPLAY_NAME, JWT_SECRET_KEY
 
 router = APIRouter()
 
 # JWT Configuration
-SECRET_KEY = "winsupply-demo-secret-key-change-in-production"
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
-# Hardcoded demo credentials
+# Demo credentials from environment variables
 DEMO_USERS = {
-    "demo": {
-        "password": "demo@123",
-        "display_name": "Demo User",
+    DEMO_USERNAME: {
+        "password": DEMO_PASSWORD,
+        "display_name": DEMO_DISPLAY_NAME,
     },
 }
 

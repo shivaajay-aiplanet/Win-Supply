@@ -30,25 +30,28 @@ function Header({ showScores, toggleScores }) {
 
       <div className="flex items-center gap-3">
         <button
-          className="p-2.5 rounded-lg hover:bg-blue-500 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+          disabled
+          className="p-2.5 rounded-lg opacity-40 cursor-not-allowed"
           aria-label="Notifications"
-          title="Notifications"
+          title="Notifications (Coming Soon)"
         >
           <FiBell className="w-5 h-5 text-white" />
         </button>
 
         <button
-          className="p-2.5 rounded-lg hover:bg-blue-500 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+          disabled
+          className="p-2.5 rounded-lg opacity-40 cursor-not-allowed"
           aria-label="Settings"
-          title="Settings"
+          title="Settings (Coming Soon)"
         >
           <FiSettings className="w-5 h-5 text-white" />
         </button>
 
         <button
-          className="p-2.5 rounded-lg hover:bg-blue-500 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+          disabled
+          className="p-2.5 rounded-lg opacity-40 cursor-not-allowed"
           aria-label="Help"
-          title="Help"
+          title="Help (Coming Soon)"
         >
           <FiHelpCircle className="w-5 h-5 text-white" />
         </button>

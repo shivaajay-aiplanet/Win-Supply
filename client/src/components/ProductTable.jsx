@@ -20,7 +20,6 @@ function ProductTable({
   onDeleteMatch,
   onFeedback,
   alternativesMap,
-  onAlternativeClick,
   notFound,
   notFoundItemNumber,
 }) {
@@ -87,8 +86,14 @@ function ProductTable({
     }
   };
 
-  // Handle row click to open modal
-  const handleRowClick = (product) => {
+  // Handle row click to open modal (only if user isn't selecting text)
+  const handleRowClick = (product, e) => {
+    // Don't open modal if user is selecting/copying text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+    // Don't open modal if user clicked on an interactive element (button, link, etc.)
+    const target = e.target;
+    if (target.closest("button") || target.closest("a")) return;
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
@@ -293,11 +298,12 @@ function ProductTable({
                     return (
                       <tr
                         key={productId}
-                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 ${
+                        className={`group border-b border-gray-100 hover:bg-blue-50 hover:shadow-sm transition-all duration-150 cursor-pointer ${
                           isExactMatch
                             ? "bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-l-green-500 shadow-sm"
                             : ""
                         }`}
+                        onClick={(e) => handleRowClick(product, e)}
                         onMouseEnter={() => setHoveredRowId(productId)}
                         onMouseLeave={() => {
                           setHoveredRowId(null);
@@ -305,7 +311,7 @@ function ProductTable({
                         }}
                       >
                         {isSearchMode && showScores && (
-                          <td className="px-4 py-4">
+                          <td className="px-4 py-4 cursor-pointer">
                             <div className="flex flex-col items-start gap-2">
                               {isHybridSearch ? (
                                 <>
@@ -349,11 +355,9 @@ function ProductTable({
                             </div>
                           </td>
                         )}
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 cursor-pointer">
                           <div
-                            className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center cursor-pointer hover:bg-gray-200 hover:shadow-md transition-all duration-150"
-                            onClick={() => handleRowClick(product)}
-                            title="Click to view details"
+                            className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center"
                           >
                             <svg
                               className="w-8 h-8 text-gray-400"
@@ -371,26 +375,26 @@ function ProductTable({
                             </svg>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-800">
-                          <div className="font-medium">
+                        <td className="px-4 py-4 text-sm text-gray-800 cursor-pointer">
+                          <span className="font-medium cursor-text select-text">
                             {product.win_item_name || "N/A"}
-                          </div>
+                          </span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-800">
-                          {product.brand_name || "N/A"}
+                        <td className="px-4 py-4 text-sm text-gray-800 cursor-pointer">
+                          <span className="cursor-text select-text">{product.brand_name || "N/A"}</span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-800">
-                          {product.wise_item_number || "N/A"}
+                        <td className="px-4 py-4 text-sm text-gray-800 cursor-pointer">
+                          <span className="cursor-text select-text">{product.wise_item_number || "N/A"}</span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-800">
-                          {product.catalog_number || "N/A"}
+                        <td className="px-4 py-4 text-sm text-gray-800 cursor-pointer">
+                          <span className="cursor-text select-text">{product.catalog_number || "N/A"}</span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">
-                          {product.mainframe_description || "N/A"}
+                        <td className="px-4 py-4 text-sm text-gray-600 cursor-pointer">
+                          <span className="cursor-text select-text">{product.mainframe_description || "N/A"}</span>
                         </td>
                         {/* Alternative Product column - only show in regular browse mode */}
                         {!isSearchMode && (
-                          <td className="px-4 py-4 text-sm">
+                          <td className="px-4 py-4 text-sm cursor-pointer">
                             {(() => {
                               const altData =
                                 alternativesMap?.[product.wise_item_number];
@@ -469,11 +473,17 @@ function ProductTable({
                                   {/* Alternative details */}
                                   <div className="flex flex-col gap-1">
                                     <button
-                                      onClick={() =>
-                                        onAlternativeClick?.(altWiseItemNumber)
-                                      }
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Find the product in loaded products, or create minimal object
+                                        const altProduct = products.find(
+                                          (p) => p.wise_item_number === altWiseItemNumber
+                                        ) || { wise_item_number: altWiseItemNumber };
+                                        setSelectedProduct(altProduct);
+                                        setIsModalOpen(true);
+                                      }}
                                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-left"
-                                      title="Click to search for this product"
+                                      title="Click to view product details"
                                     >
                                       {altWiseItemNumber}
                                     </button>

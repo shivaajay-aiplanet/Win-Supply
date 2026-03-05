@@ -271,12 +271,8 @@ function ProductDetailModal({ product, isOpen, onClose }) {
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap inline-flex items-center ${
-                        activeTab === tab.id
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                      disabled
+                      className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap inline-flex items-center bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
                     >
                       {tab.icon && <span className="mr-1">{tab.icon}</span>}
                       {tab.label}
@@ -286,55 +282,48 @@ function ProductDetailModal({ product, isOpen, onClose }) {
                 <span className="text-sm text-gray-500 ml-4">
                   Available at 780 Locations
                 </span>
-                <label className="flex items-center gap-2 ml-auto text-sm cursor-pointer">
+                <label className="flex items-center gap-2 ml-auto text-sm cursor-not-allowed opacity-50">
                   <span>IOV Only</span>
                   <div
-                    className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                      iofOnly ? "bg-blue-600" : "bg-gray-300"
-                    }`}
-                    onClick={() => setIofOnly(!iofOnly)}
+                    className="relative w-10 h-5 rounded-full bg-gray-300 cursor-not-allowed"
                   >
                     <div
-                      className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        iofOnly ? "translate-x-5" : "translate-x-0.5"
-                      }`}
+                      className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow translate-x-0.5"
                     ></div>
                   </div>
                 </label>
               </div>
 
-              {/* Filter Inputs */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              {/* Filter Inputs - Disabled */}
+              <div className="grid grid-cols-3 gap-4 mb-4 opacity-50">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-gray-400 mb-1">
                     Company Name or Number
                   </label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 cursor-not-allowed text-gray-400"
                     placeholder=""
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-gray-400 mb-1">
                     Address
                   </label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 cursor-not-allowed text-gray-400"
                     placeholder="Address, City, State, or Zip Code"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-gray-400 mb-1">
                     Miles Away
                   </label>
-                  <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select disabled className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 cursor-not-allowed text-gray-400">
                     <option value="">Select</option>
-                    <option value="10">Within 10 miles</option>
-                    <option value="25">Within 25 miles</option>
-                    <option value="50">Within 50 miles</option>
-                    <option value="100">Within 100 miles</option>
                   </select>
                 </div>
               </div>
